@@ -12,28 +12,18 @@ const int inf = (int)(1e9 + 7);
 const int maxn = 100 * 1000 + 100;
 //------------------------------------------//
 
-struct dsu{
-    vector<int> s, p;
-    dsu(){}
-    dsu(int n){
-        s.assign(n, 1);
-        p.resize(n);
-        iota(begin(p), end(p), 0);
+mt19937 rng(time(0));
+int maxsz = 10;
+void solve(){
+    int n = rng() % (maxsz - 1) + 1;
+    int m = maxsz - n;
+    cout << n << " " << m << endl;
+    string res;
+    for (int i = 0; i < maxsz; ++i){
+        res.push_back('0' + rng() % 2);
     }
-    int root(int v){
-        if (p[v] == v) return v;
-        return p[v] = root(p[v]);
-    }
-    bool unite(int na, int nb){
-        int a = root(na);
-        int b = root(nb);
-        if (a == b) return false;
-        if (s[a] < s[b]) swap(a, b);
-        s[a] += s[b];
-        p[b] = a;
-        return true;
-    }
-};
+    cout << res << endl;
+}
 
 
 int32_t main(){
@@ -48,18 +38,8 @@ int32_t main(){
     std::chrono::milliseconds(1);
     mt19937 rng(milliseconds_since_epoch);
     int t = 1;
-    for (int i = 0; i < t; ++i){
-        int n = 1000;
-        cout << n << endl;
-        dsu u(n);
-        while(u.s[u.root(0)] != n){
-            int a = rng() % n;
-            int b = rng() % n;
-            if (u.unite(a, b)) {
-                cout << a+1 << " " << b+1 << endl;
-            }
-        }
-    }
+    cout << t << endl;
+    for (int test = 0; test < t; ++test) solve();
 
     return 0;
 }
