@@ -21,14 +21,15 @@ namespace Gauss {
     vi gauss(vector<vi> a, vi b) {
         int n = a.size();
         for (int row = 0; row < n; ++row) {
-            bool good = true;
+            bool good = false;
             for (int col = row; col < n; ++col) {
                 if (a[row][col] == 0) continue;
+                good = true;
                 swap(a[row], a[col]);
                 swap(b[row], b[col]);
                 break;
             }
-
+            if (!good) continue;
 
             int div = binpow(a[row][row], inf - 2);
             for (int col = 0; col < n; ++col) a[row][col] = a[row][col] * div % inf;

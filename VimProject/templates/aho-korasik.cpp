@@ -19,8 +19,6 @@ void add_word(vector<int>& w){
         if (v->sons.count(c) == 0) v->sons[c] = nodeptr++; //if no such son, add
         v->sons[c]->pch = c; //setting parent character
         v->sons[c]->par = v; //setting parent pointer
-        //v->sons[c]->curword = v->curword;
-        //v->sons[c]->curword.push_back(c);
         v = v->sons[c]; //moving to son
     }
     v->terminal = true;

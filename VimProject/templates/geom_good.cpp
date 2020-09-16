@@ -1,4 +1,3 @@
-
 /*
 namespace GEOMA_INT{
     typedef long long ll;
@@ -148,6 +147,69 @@ namespace GEOMA_REAL{
         pair<pt, pt> res;
         res.first  = rotate(cur, angle(c.c - p) - ang) + p;
         res.second = rotate(cur, angle(c.c - p) + ang) + p;
+        return res;
+    }
+
+    typedef pair<pt, pt> seg;
+
+    struct line {
+        //ax + by + c = 0;
+        ld a = 0;
+        ld b = 0;
+        ld c = 0;
+        line() {}
+        line(ld a, ld b, ld c): a(a), b(b), c(c) {}
+        ld inp(pt p) { return a*p.x + b*p.y + c; }
+        line(pt p1, pt p2) {
+            a = p2.y - p1.y;
+            b = p1.x - p2.x;
+            c = -(a*p1.x + b*p1.y);
+        }
+    };
+
+    int sign(ld a){
+        if (fabs(a) < eps) return 0;
+        return (a < 0 ? -1 : 1);
+    }
+
+    seg bounding_rectangle(seg s) {
+        seg res;
+        res.first.x = min(s.first.x, s.second.x);
+        res.first.y = min(s.first.y, s.second.y);
+        res.second.x = max(s.first.x, s.second.x);
+        res.second.y = max(s.first.y, s.second.y);
+        return res;
+    }
+    
+    bool segment_intersection(seg s1, seg s2) {
+        seg br1 = bounding_rectangle(s1);
+        seg br2 = bounding_rectangle(s2);
+        if ((br1.second.x - br2.first.x) > -eps &&
+            (br2.second.x - br1.first.x) > -eps &&
+            (br1.second.y - br2.first.y) > -eps &&
+            (br2.second.y - br1.first.y) > -eps) {
+            if (sign(cross(s2.first - s1.first, s1.second - s1.first))*sign(cross(s2.second - s1.first, s1.second - s1.first)) < 1)
+                if (sign(cross(s1.first - s2.first, s2.second - s2.first))*sign(cross(s1.second - s2.first, s2.second - s2.first)) < 1)
+                    return true;
+        }
+        return false;
+    }
+
+    pt cross_point(line l1, line l2) {
+        if (abs(l1.a) > eps) swap(l1, l2);
+        ld y = -(l1.c - l2.c*l1.a / l2.a) / (l1.b - l2.b*l1.a / l2.a);
+        if (abs(l2.b) > eps) swap(l1, l2);
+        ld x = -(l2.c - l1.c*l2.b / l1.b) / (l2.a - l1.a*l2.b / l1.b);
+        return pt(x, y);
+    }
+    pair<bool, pt> intersection_point(seg s1, seg s2){
+        //first is true if segments intersect
+        //if first is true then second is point of intersection
+        pair<bool, pt> res;
+        res.first = segment_intersection(s1, s2);
+        if (res.first == false) return res;
+        
+        res.second = cross_point(line(s1.first, s1.second), line(s2.first, s2.second));
         return res;
     }
 };

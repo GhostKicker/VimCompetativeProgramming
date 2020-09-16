@@ -1,0 +1,3591 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage[T2A]{fontenc}
+\usepackage[english,russian]{babel}     %russian support
+\usepackage{indentfirst}                %first paragraph will be with indent
+\usepackage{amsmath}                    %equations
+\usepackage{listings}
+\lstset{
+    language=C++,
+    breaklines=true, 
+    numbers=left,
+    basicstyle=\ttfamily,
+} 
+
+\begin{document}
+\tableofcontents
+\newpage
+
+
+\section{aho-korasik.cpp}
+\begin{lstlisting}
+struct node{
+    //vector<int> curword;
+    int pch = -1; //char by which you came there
+    node* par = nullptr;
+    node* link = nullptr;
+    map<int, node*> sons;
+    map<int, node*> go;
+    bool terminal = false;
+    bool goes_to_terminal = false;
+};
+const int maxnodes = 100 * 1000 + 10;
+node nodes[maxnodes];
+node* nodeptr = nodes+1;
+
+void add_word(vector<int>& w){
+    node* v = nodes;
+    for (auto& c : w){
+        if (v->sons.count(c) == 0) v->sons[c] = nodeptr++; //if no such son, add
+        v->sons[c]->pch = c; //setting parent character
+        v->sons[c]->par = v; //setting parent pointer
+        //v->sons[c]->curword = v->curword;
+        //v->sons[c]->curword.push_back(c);
+        v = v->sons[c]; //moving to son
+    }
+    v->terminal = true;
+}
+
+node* getSuffLink(node* v);
+node* getLink(node* v, int c);
+node* getSuffLink(node* v){ //suffix link
+    if (v->link) return v->link; //if calced, return
+    if (v == nodes || v->par == nodes) return v->link = nodes; //if root or near root, return root
+    return v->link = getLink(getSuffLink(v->par), v->pch); //get suff link from parent
+}
+node* getLink(node* v, int c){ //transfer function
+    if (v->go.count(c)) return v->go[c]; //if calced, return
+    if (v->sons.count(c)) return v->go[c] = v->sons[c]; //if there is son, return
+    if (v == nodes) return v->go[c] = nodes;
+    return v->go[c] = getLink(getSuffLink(v), c);
+}
+
+void set_terminals(node* v){
+    node* sl = getSuffLink(v);
+    if (sl->terminal) v->goes_to_terminal = true;
+    if (sl->goes_to_terminal) v->goes_to_terminal = true;
+}
+
+void init_corasik(vector<vector<int>>& words){
+
+    nodeptr = nodes + 1;
+    fill(nodes, nodes + maxnodes, node());
+    for (auto& it : words) add_word(it);
+
+    queue<node*> q;
+    q.push(nodes);
+    while(q.size()){
+        node* v = q.front();
+        q.pop();
+        getSuffLink(v);
+        set_terminals(v);
+        for (auto& it : v->sons)
+            q.push(it.second);
+    }
+}
+
+
+\end{lstlisting}
+
+
+\section{dinic.cpp}
+\begin{lstlisting}
+struct Dinic{
+    int s, t;
+    int graphsize;
+    struct edge { 
+        int to, cap, f = 0; 
+        edge() {}
+        edge(int to, int cap) :to(to), cap(cap) {}
+    };
+    vector<vector<int>> g;
+    vector<int> d, cnt;
+    vector<edge> E;
+    bool bfs() {
+        queue<int> q;
+        q.push(s);
+        cnt.assign(graphsize, 0);
+        d.assign(graphsize, inf);
+        d[s] = 0;
+        while (q.size()) {
+            int v = q.front();
+            if (v == t) return true;
+            q.pop();
+            for (auto e : g[v]) {
+                if (d[E[e].to] == inf && E[e].f < E[e].cap) {
+                    q.push(E[e].to);
+                    d[E[e].to] = d[v] + 1;
+                }
+            }
+        }
+        return false;
+    }
+    int dfs(int v, int f) {
+        if (v == t) return f;
+        for (; cnt[v] < (int)g[v].size(); ++cnt[v]) {
+            int e = g[v][cnt[v]];
+            int to = E[e].to;
+            if (d[to] != d[v] + 1 || E[e].f == E[e].cap) continue;
+            int flow = dfs(to, min(f, E[e].cap - E[e].f));
+            if (flow) {
+                E[e].f += flow;
+                E[e ^ 1].f -= flow;
+                return flow;
+            }
+        }
+        return 0;
+    }
+    
+    int maxflow() {
+        int f = 0;
+        int ans = 0;
+        while (bfs())
+            while ((f = dfs(s, inf)))
+                ans += f;
+        return ans;
+    }
+    
+    void add_edge(int f, int to, int cap) {
+        g[f].push_back(int(E.size()));
+        E.push_back(edge(to, cap));
+        g[to].push_back(int(E.size()));
+        E.push_back(edge(f, 0));
+    }
+    Dinic(){}
+    Dinic(int s, int t, int graphsize):s(s), t(t), graphsize(graphsize){
+        g.resize(graphsize);
+    }
+};
+
+\end{lstlisting}
+
+
+\section{bigint.cpp}
+\begin{lstlisting}
+const int base = 1000000000;
+const int base_digits = 9;
+struct bigint {
+    vector<int> a;
+    int sign;
+    /*<arpa>*/
+    int size(){
+        if(a.empty())return 0;
+        int ans=(a.size()-1)*base_digits;
+        int ca=a.back();
+        while(ca)
+            ans++,ca/=10;
+        return ans;
+    }
+    bigint operator ^(const bigint &v){
+        bigint ans=1,a=*this,b=v;
+        while(!b.isZero()){
+            if(b%2)
+                ans*=a;
+            a*=a,b/=2;
+        }
+        return ans;
+    }
+    string to_string(){
+        stringstream ss;
+        ss << *this;
+        string s;
+        ss >> s;
+        return s;
+    }
+    int sumof(){
+        string s = to_string();
+        int ans = 0;
+        for(auto c : s)  ans += c - '0';
+        return ans;
+    }
+    /*</arpa>*/
+    bigint() :
+            sign(1) {
+    }
+
+    bigint(long long v) {
+        *this = v;
+    }
+
+    bigint(const string &s) {
+        read(s);
+    }
+
+    void operator=(const bigint &v) {
+        sign = v.sign;
+        a = v.a;
+    }
+
+    void operator=(long long v) {
+        sign = 1;
+        a.clear();
+        if (v < 0)
+            sign = -1, v = -v;
+        for (; v > 0; v = v / base)
+            a.push_back(v % base);
+    }
+
+    bigint operator+(const bigint &v) const {
+        if (sign == v.sign) {
+            bigint res = v;
+
+            for (int i = 0, carry = 0; i < (int) max(a.size(), v.a.size()) || carry; ++i) {
+                if (i == (int) res.a.size())
+                    res.a.push_back(0);
+                res.a[i] += carry + (i < (int) a.size() ? a[i] : 0);
+                carry = res.a[i] >= base;
+                if (carry)
+                    res.a[i] -= base;
+            }
+            return res;
+        }
+        return *this - (-v);
+    }
+
+    bigint operator-(const bigint &v) const {
+        if (sign == v.sign) {
+            if (abs() >= v.abs()) {
+                bigint res = *this;
+                for (int i = 0, carry = 0; i < (int) v.a.size() || carry; ++i) {
+                    res.a[i] -= carry + (i < (int) v.a.size() ? v.a[i] : 0);
+                    carry = res.a[i] < 0;
+                    if (carry)
+                        res.a[i] += base;
+                }
+                res.trim();
+                return res;
+            }
+            return -(v - *this);
+        }
+        return *this + (-v);
+    }
+
+    void operator*=(int v) {
+        if (v < 0)
+            sign = -sign, v = -v;
+        for (int i = 0, carry = 0; i < (int) a.size() || carry; ++i) {
+            if (i == (int) a.size())
+                a.push_back(0);
+            long long cur = a[i] * (long long) v + carry;
+            carry = (int) (cur / base);
+            a[i] = (int) (cur % base);
+            //asm("divl %%ecx" : "=a"(carry), "=d"(a[i]) : "A"(cur), "c"(base));
+        }
+        trim();
+    }
+
+    bigint operator*(int v) const {
+        bigint res = *this;
+        res *= v;
+        return res;
+    }
+
+    void operator*=(long long v) {
+        if (v < 0)
+            sign = -sign, v = -v;
+        if(v > base){
+            *this = *this * (v / base) * base + *this * (v % base);
+            return ;
+        }
+        for (int i = 0, carry = 0; i < (int) a.size() || carry; ++i) {
+            if (i == (int) a.size())
+                a.push_back(0);
+            long long cur = a[i] * (long long) v + carry;
+            carry = (int) (cur / base);
+            a[i] = (int) (cur % base);
+            //asm("divl %%ecx" : "=a"(carry), "=d"(a[i]) : "A"(cur), "c"(base));
+        }
+        trim();
+    }
+
+    bigint operator*(long long v) const {
+        bigint res = *this;
+        res *= v;
+        return res;
+    }
+
+    friend pair<bigint, bigint> divmod(const bigint &a1, const bigint &b1) {
+        int norm = base / (b1.a.back() + 1);
+        bigint a = a1.abs() * norm;
+        bigint b = b1.abs() * norm;
+        bigint q, r;
+        q.a.resize(a.a.size());
+
+        for (int i = a.a.size() - 1; i >= 0; i--) {
+            r *= base;
+            r += a.a[i];
+            int s1 = r.a.size() <= b.a.size() ? 0 : r.a[b.a.size()];
+            int s2 = r.a.size() <= b.a.size() - 1 ? 0 : r.a[b.a.size() - 1];
+            int d = ((long long) base * s1 + s2) / b.a.back();
+            r -= b * d;
+            while (r < 0)
+                r += b, --d;
+            q.a[i] = d;
+        }
+
+        q.sign = a1.sign * b1.sign;
+        r.sign = a1.sign;
+        q.trim();
+        r.trim();
+        return make_pair(q, r / norm);
+    }
+
+    bigint operator/(const bigint &v) const {
+        return divmod(*this, v).first;
+    }
+
+    bigint operator%(const bigint &v) const {
+        return divmod(*this, v).second;
+    }
+
+    void operator/=(int v) {
+        if (v < 0)
+            sign = -sign, v = -v;
+        for (int i = (int) a.size() - 1, rem = 0; i >= 0; --i) {
+            long long cur = a[i] + rem * (long long) base;
+            a[i] = (int) (cur / v);
+            rem = (int) (cur % v);
+        }
+        trim();
+    }
+
+    bigint operator/(int v) const {
+        bigint res = *this;
+        res /= v;
+        return res;
+    }
+
+    int operator%(int v) const {
+        if (v < 0)
+            v = -v;
+        int m = 0;
+        for (int i = a.size() - 1; i >= 0; --i)
+            m = (a[i] + m * (long long) base) % v;
+        return m * sign;
+    }
+
+    void operator+=(const bigint &v) {
+        *this = *this + v;
+    }
+    void operator-=(const bigint &v) {
+        *this = *this - v;
+    }
+    void operator*=(const bigint &v) {
+        *this = *this * v;
+    }
+    void operator/=(const bigint &v) {
+        *this = *this / v;
+    }
+
+    bool operator<(const bigint &v) const {
+        if (sign != v.sign)
+            return sign < v.sign;
+        if (a.size() != v.a.size())
+            return a.size() * sign < v.a.size() * v.sign;
+        for (int i = a.size() - 1; i >= 0; i--)
+            if (a[i] != v.a[i])
+                return a[i] * sign < v.a[i] * sign;
+        return false;
+    }
+
+    bool operator>(const bigint &v) const {
+        return v < *this;
+    }
+    bool operator<=(const bigint &v) const {
+        return !(v < *this);
+    }
+    bool operator>=(const bigint &v) const {
+        return !(*this < v);
+    }
+    bool operator==(const bigint &v) const {
+        return !(*this < v) && !(v < *this);
+    }
+    bool operator!=(const bigint &v) const {
+        return *this < v || v < *this;
+    }
+
+    void trim() {
+        while (!a.empty() && !a.back())
+            a.pop_back();
+        if (a.empty())
+            sign = 1;
+    }
+
+    bool isZero() const {
+        return a.empty() || (a.size() == 1 && !a[0]);
+    }
+
+    bigint operator-() const {
+        bigint res = *this;
+        res.sign = -sign;
+        return res;
+    }
+
+    bigint abs() const {
+        bigint res = *this;
+        res.sign *= res.sign;
+        return res;
+    }
+
+    long long longValue() const {
+        long long res = 0;
+        for (int i = a.size() - 1; i >= 0; i--)
+            res = res * base + a[i];
+        return res * sign;
+    }
+
+    friend bigint gcd(const bigint &a, const bigint &b) {
+        return b.isZero() ? a : gcd(b, a % b);
+    }
+    friend bigint lcm(const bigint &a, const bigint &b) {
+        return a / gcd(a, b) * b;
+    }
+
+    void read(const string &s) {
+        sign = 1;
+        a.clear();
+        int pos = 0;
+        while (pos < (int) s.size() && (s[pos] == '-' || s[pos] == '+')) {
+            if (s[pos] == '-')
+                sign = -sign;
+            ++pos;
+        }
+        for (int i = s.size() - 1; i >= pos; i -= base_digits) {
+            int x = 0;
+            for (int j = max(pos, i - base_digits + 1); j <= i; j++)
+                x = x * 10 + s[j] - '0';
+            a.push_back(x);
+        }
+        trim();
+    }
+
+    friend istream& operator>>(istream &stream, bigint &v) {
+        string s;
+        stream >> s;
+        v.read(s);
+        return stream;
+    }
+
+    friend ostream& operator<<(ostream &stream, const bigint &v) {
+        if (v.sign == -1)
+            stream << '-';
+        stream << (v.a.empty() ? 0 : v.a.back());
+        for (int i = (int) v.a.size() - 2; i >= 0; --i)
+            stream << setw(base_digits) << setfill('0') << v.a[i];
+        return stream;
+    }
+
+    static vector<int> convert_base(const vector<int> &a, int old_digits, int new_digits) {
+        vector<long long> p(max(old_digits, new_digits) + 1);
+        p[0] = 1;
+        for (int i = 1; i < (int) p.size(); i++)
+            p[i] = p[i - 1] * 10;
+        vector<int> res;
+        long long cur = 0;
+        int cur_digits = 0;
+        for (int i = 0; i < (int) a.size(); i++) {
+            cur += a[i] * p[cur_digits];
+            cur_digits += old_digits;
+            while (cur_digits >= new_digits) {
+                res.push_back(int(cur % p[new_digits]));
+                cur /= p[new_digits];
+                cur_digits -= new_digits;
+            }
+        }
+        res.push_back((int) cur);
+        while (!res.empty() && !res.back())
+            res.pop_back();
+        return res;
+    }
+
+    typedef vector<long long> vll;
+
+    static vll karatsubaMultiply(const vll &a, const vll &b) {
+        int n = a.size();
+        vll res(n + n);
+        if (n <= 32) {
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < n; j++)
+                    res[i + j] += a[i] * b[j];
+            return res;
+        }
+
+        int k = n >> 1;
+        vll a1(a.begin(), a.begin() + k);
+        vll a2(a.begin() + k, a.end());
+        vll b1(b.begin(), b.begin() + k);
+        vll b2(b.begin() + k, b.end());
+
+        vll a1b1 = karatsubaMultiply(a1, b1);
+        vll a2b2 = karatsubaMultiply(a2, b2);
+
+        for (int i = 0; i < k; i++)
+            a2[i] += a1[i];
+        for (int i = 0; i < k; i++)
+            b2[i] += b1[i];
+
+        vll r = karatsubaMultiply(a2, b2);
+        for (int i = 0; i < (int) a1b1.size(); i++)
+            r[i] -= a1b1[i];
+        for (int i = 0; i < (int) a2b2.size(); i++)
+            r[i] -= a2b2[i];
+
+        for (int i = 0; i < (int) r.size(); i++)
+            res[i + k] += r[i];
+        for (int i = 0; i < (int) a1b1.size(); i++)
+            res[i] += a1b1[i];
+        for (int i = 0; i < (int) a2b2.size(); i++)
+            res[i + n] += a2b2[i];
+        return res;
+    }
+
+    bigint operator*(const bigint &v) const {
+        vector<int> a6 = convert_base(this->a, base_digits, 6);
+        vector<int> b6 = convert_base(v.a, base_digits, 6);
+        vll a(a6.begin(), a6.end());
+        vll b(b6.begin(), b6.end());
+        while (a.size() < b.size())
+            a.push_back(0);
+        while (b.size() < a.size())
+            b.push_back(0);
+        while (a.size() & (a.size() - 1))
+            a.push_back(0), b.push_back(0);
+        vll c = karatsubaMultiply(a, b);
+        bigint res;
+        res.sign = sign * v.sign;
+        for (int i = 0, carry = 0; i < (int) c.size(); i++) {
+            long long cur = c[i] + carry;
+            res.a.push_back((int) (cur % 1000000));
+            carry = (int) (cur / 1000000);
+        }
+        res.a = convert_base(res.a, 6, base_digits);
+        res.trim();
+        return res;
+    }
+};
+\end{lstlisting}
+
+
+\section{stdc++.cpp}
+\begin{lstlisting}
+// C++ includes used for precompiling -*- C++ -*-
+
+// Copyright (C) 2003-2014 Free Software Foundation, Inc.
+//
+// This file is part of the GNU ISO C++ Library.  This library is free
+// software; you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the
+// Free Software Foundation; either version 3, or (at your option)
+// any later version.
+
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// Under Section 7 of GPL version 3, you are granted additional
+// permissions described in the GCC Runtime Library Exception, version
+// 3.1, as published by the Free Software Foundation.
+
+// You should have received a copy of the GNU General Public License and
+// a copy of the GCC Runtime Library Exception along with this program;
+// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+// <http://www.gnu.org/licenses/>.
+
+/** @file stdc++.h
+ *  This is an implementation file for a precompiled header.
+ */
+
+// 17.4.1.2 Headers
+
+// C
+#ifndef _GLIBCXX_NO_ASSERT
+#include <cassert>
+#endif
+#include <cctype>
+#include <cerrno>
+#include <cfloat>
+#include <ciso646>
+#include <climits>
+#include <clocale>
+#include <cmath>
+#include <csetjmp>
+#include <csignal>
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+
+#if __cplusplus >= 201103L
+#include <ccomplex>
+#include <cfenv>
+#include <cinttypes>
+#include <cstdalign>
+#include <cstdbool>
+#include <cstdint>
+#include <ctgmath>
+#include <cwchar>
+#include <cwctype>
+#endif
+
+// C++
+template <class T>
+T __gcd(T a, T b) { return b? __gcd(b, a%b) : a; }
+#include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
+#include <random>
+#include <bitset>
+#include <complex>
+#include <deque>
+#include <exception>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <ios>
+#include <iosfwd>
+#include <iostream>
+#include <istream>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <locale>
+#include <map>
+#include <memory>
+#include <new>
+#include <numeric>
+#include <ostream>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <streambuf>
+#include <string>
+#include <typeinfo>
+#include <utility>
+#include <valarray>
+#include <vector>
+
+#if __cplusplus >= 201103L
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <forward_list>
+#include <future>
+#include <initializer_list>
+#include <mutex>
+#include <random>
+#include <ratio>
+#include <regex>
+#include <scoped_allocator>
+#include <system_error>
+#include <thread>
+#include <tuple>
+#include <typeindex>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#endif
+
+\end{lstlisting}
+
+
+\section{heavy-light-decomposition.cpp}
+\begin{lstlisting}
+struct stree{
+    int n = 1;
+    vector<int> t;
+    stree(){}
+    stree(vector<int>& v){
+        while(n < (int)v.size()) n *= 2;
+        t.resize(2*n, inf);
+        for (int i = 0; i < (int)v.size(); ++i) t[i+n] = v[i];
+        for (int i = n-1; i; --i) t[i] = min(t[i+i], t[i+i+1]);
+    }
+    void set(int i, int x){
+        t[i+=n] = x;
+        for (i/=2; i; i/=2) t[i] = min(t[i+i], t[i+i+1]);
+    }
+    int get(int l, int r){
+        int res = inf;
+        for (l+=n, r+=n; l<=r; l/=2, r/=2){
+            if (l % 2 == 1) res = min(res, t[l++]);
+            if (r % 2 == 0) res = min(res, t[r--]);
+        }
+        return res;
+    }
+};
+ 
+struct HeavyLightDecomposition{
+    vector<vector<int>> g;          //your instance of graph
+    vector<stree> dec;              //structures: trees or tables or whatever
+    vector<int> conn;               //vertex to which structs connect
+    vector<pair<int,int>> ind;      //indexes of vertices: number of struct and index inside struct
+    vector<int> sz;                 //sizes of subtrees;
+    vector<int> dep;                //depth of vertices;
+    static const int maxpw = 25;    //maximum depth of graph is 2^maxpw
+    vector<array<int, maxpw>> par;  //parents for lca
+ 
+    void dfs(int v, int p, int d){
+        //for calculating lca, sz, dep
+        par[v][0] = p;
+        dep[v] = d;
+        for (int i = 1; i < maxpw; ++i)
+            par[v][i] = par[par[v][i-1]][i-1]; 
+        for (auto& to : g[v]){
+            if (to == p) continue;
+            dfs(to, v, d+1);
+            sz[v] += sz[to];
+        }
+    }
+ 
+    void dfs_build(int v, int p, vector<int>& tmp, vector<int>& vals){
+        //for building decomposition itself
+        if ((int)tmp.size() == 0) conn.push_back(p);
+        ind[v] = make_pair((int)dec.size(), (int)tmp.size());
+        tmp.push_back(vals[v]);
+        sort(g[v].begin(), g[v].end(), [&](int a, int b){return sz[a] > sz[b];});
+ 
+        int sons = 0;
+        for (auto& to : g[v]){
+            if (to == p) continue;
+            if (sons != 0) tmp = vector<int>();
+            dfs_build(to, v, tmp, vals);
+            ++sons;
+        }
+        if (sons == 0) dec.push_back(stree(tmp));
+    }
+ 
+    HeavyLightDecomposition(){}
+    HeavyLightDecomposition(vector<vector<int>>& gg, vector<int> vals){
+        //takes graph and values in vertices
+        g = gg;
+        int n = (int)g.size();
+        sz.assign(n, 1);
+        dep.resize(n);
+        ind.resize(n);
+        par.resize(n);
+        dfs(0, 0, 0);
+        //for (auto& it : sz) cout << it << " ";
+        //cout << endl;
+        vector<int> tmp;
+        dfs_build(0, 0, tmp, vals);
+    }
+    int getpar(int v, int up){
+        //this is for lca
+        for (int curpw = maxpw - 1; curpw >= 0; --curpw)
+            if ((up >> curpw) & 1) v = par[v][curpw];
+        return v;
+    }
+    int LCA(int a, int b){
+        if (dep[a] < dep[b]) swap(a, b);
+        a = getpar(a, dep[a] - dep[b]);
+        if (a == b) return a;
+        for (int curpw = maxpw - 1; curpw >= 0; --curpw){
+            if (par[a][curpw] == par[b][curpw]) continue;
+            a = par[a][curpw];
+            b = par[b][curpw];
+        }
+        return par[a][0];
+    }
+ 
+    void set(int v, int x){
+        dec[ind[v].first].set(ind[v].second, x);
+    }
+    int get(int a, int b){
+        //be careful with ranges for every .get operation
+        int c = LCA(a, b);
+        int res = inf;
+        while(ind[a].first != ind[c].first){
+            res = min(res, dec[ind[a].first].get(0, ind[a].second));
+            a = conn[ind[a].first];
+        }
+        if (a != c) res = min(res, dec[ind[a].first].get(ind[c].second + 1, ind[a].second));
+        swap(a, b);
+        while(ind[a].first != ind[c].first){
+            res = min(res, dec[ind[a].first].get(0, ind[a].second));
+            a = conn[ind[a].first];
+        }
+        if (a != c) res = min(res, dec[ind[a].first].get(ind[c].second + 1, ind[a].second));
+ 
+        //if decompositon is on edges, you dont need next line
+        //but you still need to give vertices values
+        res = min(res, dec[ind[c].first].get(ind[c].second, ind[c].second));
+        return res;
+    }
+    
+};
+
+\end{lstlisting}
+
+
+\section{geom.cpp}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+//#define int int64_t
+#define all(x) (x).begin(), (x).end()
+#define out(x) return void(cout << x << endl)
+#define OUT(x) ((cout << x), exit(0))
+using namespace std;
+typedef long double db;
+const db eps = 1e-9;
+const db pi = acos(-1.0);
+const int64_t INF = (int64_t)(2e18);
+const int inf = (int)(1e9 + 7);
+//------------------------------------------//
+
+bool eq(db a, db b) { return abs(a - b) < eps; }
+struct pt {
+    db x, y;
+    pt() {}
+    pt(db x, db y) :x(x), y(y) {}
+    bool operator<(pt a){return eq(x, a.x)? y < a.y : x < a.x;}
+    pt operator+(pt b) { return pt(x + b.x, y + b.y); }
+    pt operator-(pt b) { return pt(x - b.x, y - b.y); }
+    pt operator*(db d) { return pt(x * d, y * d); }
+    pt operator/(db d) { return pt(x / d, y / d); }
+    pt& operator+=(pt b) { return *this = *this + b; }
+    pt& operator-=(pt b) { return *this = *this + b; }
+    pt& operator*=(db d) { return *this = *this * d; }
+    pt& operator/=(db d) { return *this = *this / d; }
+};
+pt operator*(db d, pt p) { return pt(p.x * d, p.y * d); }
+ostream& operator<<(ostream& os, pt p) { return os << '[' << p.x << ", " << p.y << ']'; }
+istream& operator>>(istream& is, pt& p) { return is >> p.x >> p.y; }
+
+bool eq(pt a, pt b) { return eq(a.x, b.x) && eq(a.y, b.y); }
+db dot(pt a, pt b) { return a.x * b.x + a.y * b.y; }
+db cross(pt a, pt b) { return a.y * b.x - a.x * b.y; }
+db dist2(pt a, pt b = pt(0, 0)) { return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y); }
+db angle(pt a, pt b = pt(1, 0)) { return atan2(cross(a, b), dot(a, b)); }
+
+db polygon_area(vector<pt> polygon) {
+    db res = 0;
+    for (int i = 0; i < (int)polygon.size(); ++i)
+        res += cross(polygon[i], polygon[(i + 1) % int(polygon.size())]);
+    return abs(res / 2);
+}
+
+struct line {
+    db a, b, c;
+    line() {}
+    line(db a, db b, db c) :a(a), b(b), c(c) {}
+    line(pt p1, pt p2) :a(p1.y - p2.y), b(p2.x - p1.x), c(-a*p1.x - b*p1.y) {}
+    db at(pt p) { return a * p.x + b * p.y + c; }
+};
+line normal(line l) {
+    db mult = 1.0 / sqrt(l.a * l.a + l.b * l.b);
+    return line(l.a * mult, l.b * mult, l.c * mult);
+}
+line bisector_line(pt a, pt b, pt c) {
+    //line of angle abc
+    pt v1 = (a - b); v1 /= sqrt(dist2(v1));
+    pt v2 = (c - b); v2 /= sqrt(dist2(v2));
+    return line(b, b + v1 + v2);
+}
+db dist(pt p, line l) { return abs(l.at(p) / sqrt(dist2(pt(l.a, l.b)))); }
+db dist(line l, pt p) { return dist(p, l); }
+
+
+struct beam {
+    pt st, fn;
+    line l;
+    beam() {}
+    beam(pt p1, pt p2) :st(p1), fn(p2), l(p1, p2) {}
+};
+db dist(pt p, beam b) {
+    if (dot(p - b.st, b.fn - b.st) < 0) return sqrt(dist2(p, b.st));
+    return dist(p, b.l);
+}
+db dist(beam b, pt p) { return dist(p, b); }
+
+struct segment {
+    pt st, fn;
+    line l;
+    segment() {}
+    segment(pt pt1, pt pt2) :st(pt1), fn(pt2), l(pt1, pt2) {}
+};
+db dist(pt p, segment s) {
+    if (dot(p - s.st, s.fn - s.st) < 0) return sqrt(dist2(p, s.st));
+    if (dot(p - s.fn, s.st - s.fn) < 0) return sqrt(dist2(p, s.fn));
+    return dist(p, s.l);
+}
+db dist(segment b, pt p) { return dist(p, b); }
+
+segment bounding_rectangle(segment s){
+    segment res;
+    res.st.x = min(s.st.x, s.fn.x);
+    res.st.y = min(s.st.y, s.fn.y);
+    res.fn.x = max(s.st.x, s.fn.x);
+    res.fn.y = max(s.st.y, s.fn.y);
+    return res;
+}
+bool intersect(segment s1, segment s2)
+{
+    segment br1 = bounding_rectangle(s1);
+    segment br2 = bounding_rectangle(s2);
+    if ((br1.fn.x - br2.st.x) > -eps &&
+        (br2.fn.x - br1.st.x) > -eps &&
+        (br1.fn.y - br2.st.y) > -eps &&
+        (br2.fn.y - br1.st.y) > -eps)
+    {
+        db c1 = cross(s2.st - s1.st, s1.fn - s1.st) * cross(s2.fn - s1.st, s1.fn - s1.st);
+        db c2 = cross(s1.st - s2.st, s2.fn - s2.st) * cross(s1.fn - s2.st, s2.fn - s2.st);
+        if (c1 > -eps || c2 > -eps) return false;
+        return true;
+    }
+    return false;
+}
+db dist(segment s1, segment s2) {
+    if (intersect(s1,s2)) return 0.0;
+    db res = dist(s1.st, s2);
+    res = min(res, dist(s1.fn, s2));
+    res = min(res, dist(s2.st, s1));
+    res = min(res, dist(s2.fn, s1));
+    return res;
+}
+pt cross_point(segment a, segment b) {
+    pt l = a.st;
+    pt r = a.fn;
+    for (int i = 0; i < 100; ++i) {
+        if (eq(l, r)) break;
+        pt mid1 = (2 * l + r) / 3;
+        pt mid2 = (l + 2 * r) / 3;
+        if (dist(mid1, b) < dist(mid2, b)) r = mid2;
+        else l = mid1;
+    }
+    return r;
+}
+pt cross_point(line a, line b){
+    pt res;
+    res.x = (a.c * b.b - b.c * a.b) / (a.a * b.b - b.a * a.b);
+    res.y = (a.a * b.c - b.a * a.c) / (a.a * b.b - b.a * a.b);
+    return res;
+}
+
+
+
+int32_t main() {
+    ios_base::sync_with_stdio(false);
+    cout << fixed << setprecision(10);
+    cin.tie(nullptr);
+#ifdef _MY
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+#ifndef _MY
+    freopen("line1.in", "r", stdin);
+    freopen("line1.out", "w", stdout);
+#endif
+
+    pt a, b;
+    cin >> a >> b;
+    line l(a, b);
+    cout << l.a << " " << l.b << " " << l.c;
+
+
+
+    return 0;
+}
+
+\end{lstlisting}
+
+
+\section{ordered_set.cpp}
+\begin{lstlisting}
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace __gnu_pbds;
+
+typedef tree < ll, null_type, less < ll >, rb_tree_tag, tree_order_statistics_node_update > ordered_set;
+
+
+
+ordered_set X;
+X.insert(1);
+X.insert(2);
+X.insert(4);
+X.insert(8);
+X.insert(16);
+
+cout<<*X.find_by_order(1)<<endl; // 2
+cout<<*X.find_by_order(2)<<endl; // 4
+cout<<*X.find_by_order(4)<<endl; // 16
+cout<<(end(X)==X.find_by_order(6))<<endl; // true
+
+cout<<X.order_of_key(-5)<<endl;  // 0
+cout<<X.order_of_key(1)<<endl;   // 0
+cout<<X.order_of_key(3)<<endl;   // 2
+cout<<X.order_of_key(4)<<endl;   // 2
+cout<<X.order_of_key(400)<<endl; // 5
+
+\end{lstlisting}
+
+
+\section{gauss module.cpp}
+\begin{lstlisting}
+namespace Gauss {
+    typedef vector<int> vi;
+    const int inf = int(1e9 + 7);
+    int binpow(int a, int p) {
+        int res = 1;
+        for (; p; p >>= 1) {
+            if (p & 1)res = res * a % inf;
+            a = a * a % inf;
+        }
+        return res;
+    }
+
+    int sub(int a, int b) {
+        int res = a - b;
+        res %= inf;
+        res += inf;
+        res %= inf;
+        return res;
+    }
+
+    vi gauss(vector<vi> a, vi b) {
+        int n = a.size();
+        for (int row = 0; row < n; ++row) {
+            bool good = true;
+            for (int col = row; col < n; ++col) {
+                if (a[row][col] == 0) continue;
+                swap(a[row], a[col]);
+                swap(b[row], b[col]);
+                break;
+            }
+
+
+            int div = binpow(a[row][row], inf - 2);
+            for (int col = 0; col < n; ++col) a[row][col] = a[row][col] * div % inf;
+            b[row] = b[row] * div % inf;
+
+            for (int currow = row + 1; currow < n; ++currow) {
+                if (a[currow][row] == 0) continue;
+                int mult = a[currow][row];
+                for (int col = 0; col < n; ++col) a[currow][col] = sub(a[currow][col], a[row][col] * mult);
+                b[currow] = sub(b[currow], b[row] * mult);
+            }
+        }
+
+        for (int row = n - 1; row >= 0; --row) {
+            int div = binpow(a[row][row], inf - 2);
+            for (int col = 0; col < n; ++col) a[row][col] = a[row][col] * div % inf;
+            b[row] = b[row] * div % inf;
+
+            for (int currow = 0; currow < row; ++currow) {
+                int mult = a[currow][row];
+                for (int col = 0; col < n; ++col) a[currow][col] = sub(a[currow][col], a[row][col] * mult);
+                b[currow] = sub(b[currow], b[row] * mult);
+            }
+        }
+
+        for (int i = 0; i < n; ++i) {
+            b[i] *= binpow(a[i][i], inf - 2);
+            b[i] %= inf;
+            a[i][i] = 1;
+        }
+        return b;
+    }
+}
+using namespace Gauss;
+
+\end{lstlisting}
+
+
+\section{li_chao.cpp}
+\begin{lstlisting}
+struct line
+{
+    int64_t k, b;
+    line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+    int64_t operator[](int64_t a) { return a * k + b; }
+};
+struct li_chao
+{
+    static const int64_t maxn = 100 * 1000 + 4;
+    vector<int64_t> x;
+    vector<line> tr;
+    int64_t n = 1;
+    li_chao() {}
+    li_chao(vector<int64_t>& xx) { 
+        //unordered array of all xs
+        x = xx;
+        x.push_back(INF);
+        sort(all(x));
+        x.resize(unique(all(x)) - begin(x));
+        tr.assign(4 * maxn, line());
+    }
+    void set(line nl, int64_t v = 1, int64_t l = 0, int64_t r = maxn)
+    {
+        r = min(r, (int64_t)x.size() - 1);
+        int64_t m = (l + r) / 2;
+        bool left = nl[x[l]] < tr[v][x[l]];
+        bool mid = nl[x[m]] < tr[v][x[m]];
+        bool right = nl[x[r]] < tr[v][x[r]];
+        if (mid) swap(nl, tr[v]);
+        if (r - l == 1) return;
+        if (left != mid) set(nl, v + v, l, m);
+        if (right != mid) set(nl, v + v + 1, m, r);
+
+    }
+    int64_t get(int64_t p, int64_t v = 1, int64_t l = 0, int64_t r = maxn)
+    {
+        //gives minimal value
+        r = min(r, (int64_t)x.size() - 1);
+        int64_t m = (l + r) / 2;
+        if (r - l == 1) return tr[v][x[p]];
+        if (p < m) return min(tr[v][x[p]], get(p, v + v, l, m));
+        else return min(tr[v][x[p]], get(p, v + v + 1, m, r));
+    }
+};
+
+\end{lstlisting}
+
+
+\section{minqueue.cpp}
+\begin{lstlisting}
+template<class T>
+struct minqueue
+{
+    int b = 0, e = 0;
+    deque<T> d;
+    deque<int> di;
+    T& get() { return d.front(); }
+    void push(T a)
+    {
+        while (d.size() && d.back() > a)
+        {
+            d.pop_back();
+            di.pop_back();
+        }
+        d.push_back(a);
+        di.push_back(b++);
+    }
+    void pop()
+    {
+        if (d.size() && di.front() == e)
+        {
+            d.pop_front();
+            di.pop_front();
+        }
+        ++e;
+    }
+	int size(){ return b - e; }
+};
+
+\end{lstlisting}
+
+
+\section{fft.cpp}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+#define pb  push_back
+#define mp  make_pair
+#define fs  first
+#define sc  second
+#define ll  long long
+#define vi  vector<int>
+#define vvi vector<vi >
+#define all(x) x.begin(), x.end()
+#define PI  acos(-1.0)
+
+struct base {
+    double x, y;
+    base (double a = 0, double b = 0) { x = a; y = b; }
+};
+base operator+(base& a, base& b) { return base(a.x + b.x, a.y + b.y); }
+base operator-(base& a, base& b) { return base(a.x - b.x, a.y - b.y); }
+base operator*(base& a, base& b) { return base(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
+void operator*=(base& a, base& b) { a = a * b; }
+void operator/=(base& a, double n) { a.x /= n; a.y /= n; }
+
+int rev(int num, int lg_n) {
+    int res = 0;
+    for (int i = 0; i < lg_n; ++i)
+        if (num & (1 << i))
+            res |= 1 << (lg_n - 1 - i);
+    return res;
+}
+
+void fft(vector<base>& a, bool invert) {
+    int n = (int)a.size();
+    int lg_n = 0;
+    while ((1 << lg_n) < n)
+        ++lg_n;
+
+    for (int i = 0; i < n; ++i)
+        if (i < rev(i, lg_n))
+            swap(a[i], a[rev(i, lg_n)]);
+
+    for (int len = 2; len <= n; len <<= 1) {
+        double ang = 2 * PI / len * (invert ? -1 : 1);
+        base wlen(cos(ang), sin(ang));
+        for (int i = 0; i < n; i += len) {
+            base w(1);
+            for (int j = 0; j < len / 2; ++j) {
+                base u = a[i + j];
+                base v = a[i + j + len / 2] * w;
+                a[i + j] = u + v;
+                a[i + j + len / 2] = u - v;
+                w *= wlen;
+            }
+        }
+    }
+    if (invert)
+        for (int i = 0; i < n; ++i)
+            a[i] /= n;
+}
+
+int m, n;
+vector<base> a, b, c;
+
+void read(vector<base>& v) {
+    int k; cin >> k;
+    v.resize(k);
+    for (int i = 0; i < k; ++i)
+        cin >> v[i].x;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    read(a);
+    read(b);
+    m = max((int)a.size(), (int)b.size());
+    n = 1;
+    while (n < m + m)
+        n = n + n;
+    while (a.size() < n) a.pb(base());
+    while (b.size() < n) b.pb(base());
+    c.resize(n);
+
+    fft(a, false);
+    fft(b, false);
+    for (int i = 0; i < n; ++i)
+        c[i] = a[i] * b[i];
+    fft(c, true);
+
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{bridges.cpp}
+\begin{lstlisting}
+namespace FindAllBridges
+{
+    vector<int> bridges;
+    vector<int> fup, tin;
+    int tin_global = 0;
+    void dfs(int cur, int parent, int edge_i, vector<vector<pair<int, int>>>& g)
+    {
+        tin[cur] = ++tin_global;
+        fup[cur] = tin_global;
+        for (int i = 0; i < g[cur].size(); i++)
+        {
+            int to, index;
+            tie(to, index) = g[cur][i];
+            if (tin[to] == 0)
+            {
+                dfs(to, cur, index, g);
+                fup[cur] = min(fup[cur], fup[to]);
+            }
+            else
+            {
+                if (to != parent)
+                    fup[cur] = min(fup[cur], tin[to]);
+            }
+        }
+        if (fup[cur] == tin[cur] && edge_i != -1) bridges.push_back(edge_i);
+    }
+
+    vector<int> find_bridges(vector<vector<pair<int, int>>>& g)
+    {   //to, index_of_edge
+        tin_global = 0;
+        int n = g.size();
+        fup.assign(n, -1);
+        tin.assign(n, 0);
+        bridges.clear();
+        dfs(0, -1, -1, g);
+        return bridges;
+    }
+
+}
+\end{lstlisting}
+
+
+\section{hashes.cpp}
+\begin{lstlisting}
+const long long maxn = 1000004;
+const pair<long long, long long> p = make_pair(263, 263);
+pair<long long, long long> invp; //k^-1 % mod == k^(mod - 2) % mod
+const pair<long long, long long> mod = make_pair(1000000007, 1000000009);
+long long binpow(long long a, long long p, long long m){
+    long long res = 1;
+    for (; p>0; p/=2){
+        if (p % 2 == 1) res = res * a % m;
+        a = a * a % m;
+    }
+    return res;
+}
+pair<long long, long long> pw[maxn]; //p^0, p^1, p^2, ....
+pair<long long, long long> invpw[maxn];//p^0, p^-1, p^-2 ...
+
+struct myhash{
+    vector<pair<long long, long long>> h;
+    myhash(){}
+    myhash(string s){
+        for (int i = 0; i < (int)s.size(); ++i){
+            h.push_back(pair<long long, long long>());
+            h.back().first = s[i] * pw[i].first % mod.first;
+            h.back().second = s[i] * pw[i].second % mod.second;
+            if (i != 0) {
+                h[i].first = (h[i].first + h[i-1].first) % mod.first;
+                h[i].second = (h[i].second + h[i-1].second) % mod.second;
+            }
+        }
+    }
+    //including borders
+    pair<long long, long long> get_hash(int l, int r){
+        pair<long long, long long> res = h[r];
+        if (l != 0) res.first += mod.first - h[l-1].first;
+        if (l != 0) res.second += mod.second - h[l-1].second;
+        res.first = res.first * invpw[l].first % mod.first;
+        res.second = res.second * invpw[l].second % mod.second;
+        return res;
+    }
+};
+
+\end{lstlisting}
+
+
+\section{debug-tourist.cpp}
+\begin{lstlisting}
+template <typename A, typename B>
+string to_string(pair<A, B> p);
+ 
+template <typename A, typename B, typename C>
+string to_string(tuple<A, B, C> p);
+ 
+template <typename A, typename B, typename C, typename D>
+string to_string(tuple<A, B, C, D> p);
+ 
+string to_string(const string& s) {
+  return '"' + s + '"';
+}
+ 
+string to_string(const char* s) {
+  return to_string((string) s);
+}
+ 
+string to_string(bool b) {
+  return (b ? "true" : "false");
+}
+ 
+string to_string(vector<bool> v) {
+  bool first = true;
+  string res = "{";
+  for (int i = 0; i < static_cast<int>(v.size()); i++) {
+    if (!first) {
+      res += ", ";
+    }
+    first = false;
+    res += to_string(v[i]);
+  }
+  res += "}";
+  return res;
+}
+ 
+template <size_t N>
+string to_string(bitset<N> v) {
+  string res = "";
+  for (size_t i = 0; i < N; i++) {
+    res += static_cast<char>('0' + v[i]);
+  }
+  return res;
+}
+ 
+template <typename A>
+string to_string(A v) {
+  bool first = true;
+  string res = "{";
+  for (const auto &x : v) {
+    if (!first) {
+      res += ", ";
+    }
+    first = false;
+    res += to_string(x);
+  }
+  res += "}";
+  return res;
+}
+ 
+template <typename A, typename B>
+string to_string(pair<A, B> p) {
+  return "(" + to_string(p.first) + ", " + to_string(p.second) + ")";
+}
+ 
+template <typename A, typename B, typename C>
+string to_string(tuple<A, B, C> p) {
+  return "(" + to_string(get<0>(p)) + ", " + to_string(get<1>(p)) + ", " + to_string(get<2>(p)) + ")";
+}
+ 
+template <typename A, typename B, typename C, typename D>
+string to_string(tuple<A, B, C, D> p) {
+  return "(" + to_string(get<0>(p)) + ", " + to_string(get<1>(p)) + ", " + to_string(get<2>(p)) + ", " + to_string(get<3>(p)) + ")";
+}
+ 
+void debug_out() { cerr << endl; }
+ 
+template <typename Head, typename... Tail>
+void debug_out(Head H, Tail... T) {
+  cerr << " " << to_string(H);
+  debug_out(T...);
+}
+ 
+#ifdef _MY
+#define debug(...) cerr << "[" << #__VA_ARGS__ << "]:", debug_out(__VA_ARGS__)
+#else
+#define debug(...) 42
+#endif
+\end{lstlisting}
+
+
+\section{fftmodule.cpp}
+\begin{lstlisting}
+
+const int MOD = 998244353;
+ll qp(ll a, ll b){
+    while (b<0) b += MOD - 1;
+    ll x = 1; a %= MOD;
+    while (b){
+        if (b & 1) x = x*a%MOD;
+        a = a*a%MOD; b >>= 1;
+    }
+    return x;
+}
+int *w0[2333], *w1[2333];
+int getK(int n)
+{
+    int s = 1; while (s<n) s <<= 1; return s;
+}
+void prep(int K)
+{
+    static int pool[1048576 * 4 + 3], *p = pool, i = 1, j = 1;
+    for (; j <= K; ++i, j <<= 1){
+        w0[i] = p; w1[i] = (p += j); p += j;
+        ll g = qp(3, (MOD - 1) >> i), ig = qp(g, MOD - 2);
+        w0[i][0] = w1[i][0] = 1;
+        for (int k = 1; k<j; ++k)
+            w0[i][k] = w0[i][k - 1] * g%MOD,
+            w1[i][k] = w1[i][k - 1] * ig%MOD;
+    }
+}
+void fft(int* x, int K, int v)
+{
+    prep(K);
+    for (int i = 0, j = 0; i<K; i++){
+        if (i>j) swap(x[i], x[j]);
+        for (int l = K >> 1; (j ^= l)<l; l >>= 1);
+    }
+    for (int i = 0; i<K; i++) x[i] = (x[i] % MOD + MOD) % MOD;
+    for (int i = 2, c = 1; i <= K; i <<= 1, ++c)
+        for (int *w = v ? w1[c] : w0[c], j = 0; j<K; j += i)
+            for (int h = i >> 1, a, b, l = 0; l<h; ++l){
+                a = x[j + l]; if (a >= MOD) a -= MOD;
+                b = (ll)x[j + h + l] * w[l] % MOD,
+                    x[j + h + l] = a - b + MOD, x[j + l] = a + b;
+            }
+    for (int i = 0; i<K; i++) x[i] = (x[i] % MOD + MOD) % MOD;
+    if (!v) return;
+    ll rv = qp(K, MOD - 2);
+    for (int i = 0; i<K; i++) x[i] = x[i] * rv%MOD;
+}
+vector<int> operator * (const vector<int>& a, const vector<int>& b)
+{
+    static int p[4*1048576], q[4*1048576];
+    int w = a.size() + b.size() - 1;
+    vector<int> c; c.resize(w);
+    if (b.size()<13){
+        for (int i = 0; i<(int)a.size(); ++i)
+            for (int j = 0; j<(int)b.size(); ++j)
+                c[i + j] = (c[i + j] + (ll)a[i] * b[j]) % MOD;
+        return c;
+    }
+    int K = getK(w);
+    for (int i = 0; i<K; ++i) p[i] = q[i] = 0;
+    for (int i = 0; i<(int)a.size(); ++i) p[i] = a[i];
+    for (int i = 0; i<(int)b.size(); ++i) q[i] = b[i];
+    fft(p, K, 0); fft(q, K, 0);
+    for (int i = 0; i<K; ++i)
+        p[i] = p[i] * (ll)q[i] % MOD;
+    fft(p, K, 1);
+    for (int i = 0; i<w; ++i) c[i] = p[i];
+    return c;
+}
+\end{lstlisting}
+
+
+\section{generator.cpp}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+
+namespace Generator {
+    const int maxn = (1 << 17);
+    int used[maxn]; //idea similar to segment tree
+    int usedused[maxn];
+
+    mt19937_64 rng(time(0));
+    //mt19937_64 rng(1);
+    int getnext() {
+        int res = -1;
+        while (res == -1 || res < 2) {
+            res = rng() % maxn;
+        }
+        return res;
+    }
+
+    string getbinary(int a) {
+        string res = "";
+        while (a > 1) {
+            char next = ('0' + (a & 1));
+            res.push_back(next);
+            a /= 2;
+        }
+        reverse(begin(res), end(res));
+        return res;
+    }
+
+
+    void update_used_down(int a) {
+        if (a >= maxn) return;
+        if (used[a] == 1) return;
+        used[a] = 1;
+        update_used_down(a + a);
+        update_used_down(a + a + 1);
+    }
+    void update_used_up(int a) {
+        while (a > 1) {
+            used[a] = 1;
+            a /= 2;
+        }
+    }
+    void update_used(int a) {
+        update_used_down(a);
+        update_used_up(a);
+    }
+
+    vector<string> solve(int n, int pref) {
+
+        vector<int> output;
+        fill(used, used + maxn, 0);
+        fill(usedused, usedused + maxn, 0);
+
+        n -= pref;
+
+        //generate with unique prefixes
+        for (int i = 0; i < n; ++i) {
+            int cur = -1;
+            while (cur == -1 || used[cur] == 1) {
+                cur = getnext();
+            }
+            output.push_back(cur);
+            update_used(cur);
+            usedused[cur] = 1;
+        }
+
+        vector<int> used_idx;
+        for (int i = 0; i < maxn; ++i)
+            if (used[i]) used_idx.push_back(i);
+
+        //generate prefixes
+        for (int i = 0; i < pref; ++i) {
+            int cur = -1;
+            while (cur == -1 || usedused[cur] == 1) {
+                int idx = int(rng() % used_idx.size());
+                cur = used_idx[idx];
+            }
+            output.push_back(cur);
+            usedused[cur] = 1;
+        }
+
+        //shuffle result
+        shuffle(begin(output), end(output), rng);
+
+        vector<string> resres;
+        for (auto& it : output) {
+            resres.push_back(getbinary(it));
+            //cout << getbinary(it) << endl;
+        }
+        return resres;
+    }
+}
+
+
+int checker(vector<string>& vs) {
+    int res = 0;
+    set<string> s;
+    for (auto& it : s) {
+        s.insert(it);
+    }
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cout << fixed << setprecision(10);
+    cin.tie(nullptr);
+#ifdef _MY
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+
+    int n = 1000;
+    int cnt = 0;
+    for (int i = 0; i < 10; ++i){
+        string test = "test";
+        test = test + char(i / 10 + '0') + char(i % 10 + '0') + ".in";
+        ofstream out(test.c_str());
+
+        int pref = 0;
+        //while (pref == -1 || pref > 900) pref = Generator::rng() % 1000;
+        auto input = Generator::solve(n, pref);
+        cout << checker(input) << endl;
+        out << input.size() << endl;
+        for (auto& it : input) out << it << endl;
+    }
+
+
+}
+
+\end{lstlisting}
+
+
+\section{mod_comb.cpp}
+\begin{lstlisting}
+const int mod = 998244353;
+int add(int a, int b) { return (a + b) % mod; }
+int sub(int a, int b) { return (mod + a - b) % mod; }
+int mult(int a, int b) { return ll(a) * b % mod; }
+int binpow(int a, int p) {
+    int res = 1;
+    for (; p; p /= 2) {
+        if (p & 1) res = mult(res, a);
+        a = mult(a, a);
+    }
+    return res;
+}
+int divi(int a, int b) { return mult(a, binpow(b, mod - 2)); }
+
+int fact[maxn];
+int invf[maxn];
+void init() {
+    fact[0] = 1;
+    for (int i = 1; i < maxn; ++i) fact[i] = mult(fact[i - 1], i);
+    for (int i = 0; i < maxn; ++i) invf[i] = divi(1, fact[i]);
+}
+int C(int n, int k) {
+    int res = fact[n];
+    res = mult(res, invf[k]);
+    res = mult(res, invf[n - k]);
+    return res;
+}
+int Crep(int n, int k) {
+    return C(n + k - 1, n);
+}
+\end{lstlisting}
+
+
+\section{extgcd.cpp}
+\begin{lstlisting}
+ll extgcd(ll a, ll b, ll & x, ll & y) {
+    if (a == 0) {
+        x = 0; y = 1;
+        return b;
+    }
+    ll x1, y1;
+    ll d = extgcd(b%a, a, x1, y1);
+    x = y1 - (b / a) * x1;
+    y = x1;
+    return d;
+}
+
+\end{lstlisting}
+
+
+\section{geom_good.cpp}
+\begin{lstlisting}
+
+/*
+namespace GEOMA_INT{
+    typedef long long ll;
+    bool eq(ll a, ll b){return a == b;}
+    struct pt{
+        ll x, y;
+        pt(){}
+        pt(ll x, ll y):x(x), y(y){}
+        bool operator<(pt a){return eq(x, a.x)? y < a.y : x < a.x;}
+        pt operator-(){return pt(-x, -y);}
+        pt operator+(pt b){return pt(x + b.x, y + b.y);}
+        pt operator-(pt b){return pt(x - b.x, y - b.y);}
+        pt operator*(ll m){return pt(x*m, y*m);}
+        pt& operator+=(pt b){return *this = *this + b;}
+        pt& operator-=(pt b){return *this = *this - b;}
+        pt& operator*=(ll m){return *this = *this * m;}
+    };
+    pt operator*(ll a, pt b){return pt(a*b.x, a*b.y);}
+    ostream& operator<<(ostream& str, pt p){ 
+        return str << "[" << p.x << ", " << p.y << "]";
+    }
+    bool eq(pt a, pt b){return eq(a.x, b.x) && eq(a.y, b.y);}
+    ll dot  (pt a, pt b){return a.x*b.x + a.y*b.y;}
+    ll cross(pt a, pt b){
+        ll res = 0;
+        res += a.y * b.x;
+        res -= a.x * b.y;
+        return res;
+    }
+    ll dist2(pt a, pt b = pt(0, 0)){
+        ll res = 0;
+        res += (a.x - b.x) * (a.x - b.x);
+        res += (a.y - b.y) * (a.y - b.y);
+        return res;
+    }
+
+    //given vector of points of polygon
+    //returns 2 times area of that polygon
+    ll polygon_area_x2(vector<pt> v){
+        ll res = 0;
+        for (int i = 0; i < (int)v.size(); ++i){
+            res += cross(v[i], v[(i+1)%(int)v.size()]);
+        }
+        return abs(res);
+    }
+    struct circle{
+        pt c;
+        ll r;
+        circle(){}
+        circle(pt c, ll r):c(c), r(r){}
+    };
+    bool is_inside(pt p, circle c){ return dist2(p, c.c) < c.r*c.r; }
+    bool on_surface(pt p, circle c){ return dist2(p, c.c) == c.r*c.r; }
+};
+using namespace GEOMA_INT;
+*/
+
+namespace GEOMA_REAL{
+    typedef long double ld;
+    const ld eps = 1e-6;
+    const ld pi = acos(-1.0);
+    bool eq(ld a, ld b){return abs(a-b) < eps;}
+    
+    struct pt{
+        ld x, y;
+        pt(){}
+        pt(ld x, ld y):x(x),y(y){}
+        bool operator<(pt a){return eq(x, a.x)? y < a.y : x < a.x;}
+        pt operator-(){return pt(-x, -y);}
+        pt operator+(pt b){return pt(x + b.x, y + b.y);}
+        pt operator-(pt b){return pt(x - b.x, y - b.y);}
+        pt operator*(ld m){return pt(x*m, y*m);}
+        pt operator/(ld m){assert(!eq(m, 0.0)); return pt(x/m, y/m);}
+        pt& operator+=(pt b){return *this = *this + b;}
+        pt& operator-=(pt b){return *this = *this - b;}
+        pt& operator*=(ld m){return *this = *this * m;}
+        pt& operator/=(ld m){return *this = *this / m;}
+    };
+    pt operator*(ld a, pt b){return pt(a*b.x, a*b.y);}
+    ostream& operator<<(ostream& str, pt p){ 
+        return str << "[" << p.x << ", " << p.y << "]";
+    }
+
+    bool eq(pt a, pt b){return eq(a.x, b.x) && eq(a.y, b.y);}
+    ld dot  (pt a, pt b){return a.x*b.x + a.y*b.y;}
+    ld cross(pt a, pt b){
+        ld res = 0;
+        res += a.y * b.x;
+        res -= a.x * b.y;
+        return res;
+    }
+    ld dist2(pt a, pt b = pt(0, 0)){
+        ld res = 0;
+        res += (a.x - b.x) * (a.x - b.x);
+        res += (a.y - b.y) * (a.y - b.y);
+        return res;
+    }
+    ld dist(pt a, pt b = pt(0, 0)){return sqrt(dist2(a, b));}
+    
+    //given vector of points of polygon
+    //returns area of that polygon
+    ld polygon_area(vector<pt> v){
+        ld res = 0;
+        for (int i = 0; i < (int)v.size(); ++i){
+            res += cross(v[i], v[(i+1)%(int)v.size()]);
+        }
+        return abs(res) / 2;
+    }
+
+    ld angle(pt p){return atan2(p.y, p.x);}
+    pt rotate(pt p, ld a){
+        pt res;
+        res.x = cos(a)*p.x - sin(a)*p.y;
+        res.y = sin(a)*p.x + cos(a)*p.y;
+        return res;
+    }
+
+    struct circle{
+        pt c; ld r;
+        circle(){}
+        circle(pt c, ld r):c(c),r(r){}
+    };
+    
+    //returns whether point is strictly inside the circle
+    bool is_inside(pt p, circle c){
+        ld d = dist2(p, c.c);
+        if (eq(d, c.r*c.r)) return false;
+        if (d > c.r*c.r) return false;
+        return true;
+    }
+
+
+    //returns whether point is strictly on surface of circle
+    bool on_surface(pt p, circle c){return eq(dist2(p, c.c), c.r*c.r);}
+
+
+    //returns points on surface of circle that
+    //are in lines tangent to that circle
+    //in counterclockwise order
+    pair<pt, pt> tangent_points(pt p, circle c){
+        ld hsqr = dist2(p, c.c);
+        assert(!eq(hsqr, c.r*c.r));
+        assert(hsqr > c.r*c.r);
+        ld bsqr = hsqr - c.r*c.r;
+        ld ang = acos(sqrt(bsqr / hsqr));
+        pt cur(sqrt(bsqr), 0);
+        pair<pt, pt> res;
+        res.first  = rotate(cur, angle(c.c - p) - ang) + p;
+        res.second = rotate(cur, angle(c.c - p) + ang) + p;
+        return res;
+    }
+};
+using namespace GEOMA_REAL;
+
+
+\end{lstlisting}
+
+
+\section{double persistent stree.cpp}
+\begin{lstlisting}
+//#pragma comment(linker, "/stack:200000000")
+#pragma GCC optimize("O3")
+#include <bits/stdc++.h>
+//#define int ll
+#define fs first
+#define sd second
+#define mp make_pair
+#define pb push_back
+#define sz(x) int((x).size())
+#define all(x) begin(x), end(x)
+#define OUT(x) { cout << x; exit(0); }
+//#define resize do_not_use_resize
+using namespace std;
+typedef double db;
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+const db eps = 1e-9;
+const db pi = acos(-1.0);
+const db dinf = 1e250;
+const ll INF = (ll)(2e18);
+const int inf = (int)(1e9 + 7);
+//------------------------------------------//
+
+struct pt
+{
+	int first, second, th;
+	pt() {}
+	pt(int first, int second, int th) : fs(fs), sd(sd), th(th) {}
+	bool operator<(pt p)
+	{
+		if (fs != p.fs) return fs < p.fs;
+		if (sd != p.sd) return sd < p.sd;
+		return th < p.th;
+	}
+};
+
+typedef vector<pt>::iterator iterp;
+typedef vector<pii>::iterator iter;
+
+const int maxn = 50 * 1000 + 5;
+
+vi x, y;
+
+struct node
+{
+	unsigned short val = 0;
+	node* l = 0, *r = 0;
+};
+struct stree
+{
+	vector<node*> t;
+	stree() { t.pb(new node()); }
+	node*& safe_ptr(node*& ptr) { return ptr ? ptr : ptr = new node(); }
+	int safe_get(node* ptr) { return ptr ? ptr->val : 0; }
+	node* set(iter b, iter e, node* v, int tl = 0, int tr = maxn)
+	{
+		node* curv = new node(*safe_ptr(v));
+		if (tl + 1 == tr)
+		{
+			for (auto it = b; it != e; ++it) curv->val += it->sd;
+			return curv;
+		}
+		int mid = (tl + tr) / 2;
+		iter midi = lower_bound(b, e, mp(mid, -inf));
+		if (b < midi) curv->l = set(b, midi, safe_ptr(v->l), tl, mid);
+		if (e > midi) curv->r = set(midi, e, safe_ptr(v->r), mid, tr);
+		curv->val = safe_get(curv->l) + safe_get(curv->r);
+		if (curv->val == 0)
+		{
+			delete curv;
+			curv = nullptr;
+		}
+		return curv;
+	}
+	int get(int l, int r, node* v, int tl = 0, int tr = maxn)
+	{
+		if (tl == l && tr == r) return v->val;
+		int mid = (tl + tr) / 2;
+		int res = 0;
+		if (l < mid) res += get(l, min(r, mid), safe_ptr(v->l), tl, mid);
+		if (r > mid) res += get(max(l, mid), r, safe_ptr(v->r), mid, tr);
+		return res;
+	}
+};
+
+struct node2
+{
+	stree* val;
+	node* ptr = nullptr;
+	node2* l = 0, *r = 0;
+	node2()
+	{
+		val = new stree();
+		ptr = val->t.back();
+	}
+	node*& safe_ptr(node*& ptr) { return ptr ? ptr : ptr = new node(); }
+	int get(int y1, int y2) { return val->get(y1, y2, safe_ptr(ptr)); }
+	void set(iter b, iter e) { ptr = val->set(b, e, ptr); }
+};
+struct stree2
+{
+	vector<node2*> t;
+	stree2() { t.pb(new node2()); }
+	node2*& safe_ptr(node2*& ptr) { return ptr ? ptr : ptr = new node2(); }
+	int safe_get(node2* ptr, int y1, int y2) { return ptr ? ptr->get(y1, y2) : 0; }
+	node2* set(iterp b, iterp e, node2* v, int tl = 0, int tr = maxn)
+	{
+		node2* curv = new node2(*v);
+
+		vector<pii>* kek = new vector<pii>();
+		for (auto it = b; it != e; ++it) kek->pb({ it->sd, it->th });
+		sort(kek->begin(), kek->end());
+
+		if (b != e) curv->set(kek->begin(), kek->end());
+		delete kek;
+
+		if (tl + 1 == tr) return curv;
+		int mid = (tl + tr) / 2;
+		iterp midi = lower_bound(b, e, pt(mid, -inf, -inf));
+		if (b != midi) curv->l = set(b, midi, safe_ptr(v->l), tl, mid);
+		if (e != midi) curv->r = set(midi, e, safe_ptr(v->r), mid, tr);
+		return curv;
+	}
+	int get(int l, int r, int y1, int y2, node2* v, int tl = 0, int tr = maxn)
+	{
+		if (tl == l && tr == r) return v->get(y1, y2);
+		int mid = (tl + tr) / 2;
+		int res = 0;
+		if (l < mid) res += get(l, min(r, mid), y1, y2, safe_ptr(v->l), tl, mid);
+		if (r > mid) res += get(max(l, mid), r, y1, y2, safe_ptr(v->r), mid, tr);
+		return res;
+	}
+};
+
+
+
+
+
+int32_t main()
+{
+	ios_base::sync_with_stdio(0);
+	cout << fixed << setprecision(10);
+	cin.tie(0);
+
+#ifdef _MY
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
+#endif
+
+	x.pb(-inf); x.pb(inf);
+	y.pb(-inf); y.pb(inf);
+
+	int n;
+	cin >> n;
+	vector<pii> pts(n);
+
+	for (auto& it : pts)
+	{
+		cin >> it.fs >> it.sd;
+		x.pb(it.fs);
+		y.pb(it.sd);
+	}
+
+	sort(all(x));
+	sort(all(y));
+	sort(all(pts));
+	x.resize(unique(all(x)) - begin(x));
+	y.resize(unique(all(y)) - begin(y));
+	pts.resize(unique(all(pts)) - begin(pts));
+
+	for (auto& it : pts)
+	{
+		it.fs = int(lower_bound(all(x), it.fs) - begin(x));
+		it.sd = int(lower_bound(all(y), it.sd) - begin(y));
+	}
+
+	vector<vi> forx(sz(x));
+	vector<vi> fory(sz(y));
+	for (auto& it : pts) forx[it.fs].pb(it.sd);
+	for (auto& it : pts) fory[it.sd].pb(it.fs);
+	for (auto& it : forx)
+	{
+		if (sz(it) == 0) continue;
+		it.pb(sz(y) - 1);
+		it.pb(0);
+		sort(all(it));
+	}
+	for (auto& it : fory)
+	{
+		if (sz(it) == 0) continue;
+		it.pb(sz(x) - 1);
+		it.pb(0);
+		sort(all(it));
+	}
+
+
+	vector<vector<pii>> eventsy(sz(y));
+	vector<vector<pii>> eventsx(sz(x));
+	for (int curx = 0; curx < sz(x); ++curx)
+	{
+		for (int i = sz(forx[curx]) - 2; i >= 0; --i)
+			eventsy[forx[curx][i]].pb({ curx, forx[curx][i + 1] });
+	}
+	for (int cury = 0; cury < sz(y); ++cury)
+	{
+		for (int i = sz(fory[cury]) - 2; i >= 0; --i)
+			eventsx[fory[cury][i]].pb({ cury, fory[cury][i + 1] });
+	}
+	for (auto& it : eventsy) sort(all(it));
+
+	stree2 diffx;
+	stree2 diffy;
+	vi curxs(sz(x), 0);
+	vi curys(sz(y), 0);
+	vector<node2*> diffxstates;
+	vector<node2*> diffystates;
+	for (int cury = 0; cury < sz(y); ++cury)
+	{
+		map<pii, int> m;
+		for (auto& it : eventsy[cury])
+		{
+			if (curxs[it.fs] != 0) m[{it.fs, curxs[it.fs] }]--;
+			m[it]++;
+		}
+		vector<pt> kek;
+		for (auto& it : m) if (it.sd) kek.pb({ it.fs.fs, it.fs.sd, it.sd });
+
+		diffx.t.pb(diffx.set(all(kek), diffx.t.back()));
+		diffxstates.pb(diffx.t.back());
+	}
+	for (int curx = 0; curx < sz(x); ++curx)
+	{
+		map<pii, int> m;
+		for (auto& it : eventsx[curx])
+		{
+			if (curys[it.fs] != 0) m[{it.fs, curys[it.fs] }]--;
+			m[it]++;
+		}
+		vector<pt> kek;
+		for (auto& it : m) if (it.sd) kek.pb({ it.fs.fs, it.fs.sd, it.sd });
+
+		diffy.t.pb(diffy.set(all(kek), diffy.t.back()));
+		diffystates.pb(diffy.t.back());
+	}
+
+
+	int q;
+	cin >> q;
+	for (int i = 0; i < q; ++i)
+	{
+		int x1, y1, x2, y2;
+		cin >> x1 >> y1 >> x2 >> y2;
+		x1 = int(lower_bound(all(x), x1) - begin(x));
+		y1 = int(lower_bound(all(y), y1) - begin(y));
+		x2 = int(upper_bound(all(x), x2) - begin(x));
+		y2 = int(upper_bound(all(y), y2) - begin(y));
+		cout << diffx.get(x1, x2, y1, y2, diffxstates[y1 - 1]) << " ";
+		cout << diffy.get(y1, y2, x1, x2, diffystates[x1 - 1]) << endl;
+	}
+
+
+#ifdef _MY
+	int loop = 0;
+	while (true)
+	{
+		for (int i = 0; i < 1000000; ++i)++loop;
+		cerr << "huh" << endl;
+	}
+	cout << loop;
+#endif
+
+	return 0;
+}
+\end{lstlisting}
+
+
+\section{mincost_maxflow.cpp}
+\begin{lstlisting}
+struct MCMF{
+    int s, t;
+    struct edge
+    {
+        int to, f = 0, cap, cost;
+        edge() {}
+        edge(int to, int cap, int cost) :to(to), cap(cap), cost(cost) {}
+    };
+     
+    vector<vi> g;
+    vector<edge> E;
+    vi d, inq, p, pe;
+    void augument()
+    {
+        queue<int> q;
+        d.assign(t + 1, inf);
+        inq.assign(t + 1, 0);
+        p.assign(t + 1, -1);
+        pe.assign(t + 1, -1);
+        d[s] = 0;
+        q.push(s);
+        while (q.size())
+        {
+            int k = q.front();
+            q.pop();
+            inq[k] = 0;
+            for (auto& e : g[k])
+            {
+                if (E[e].cap - E[e].f > 0)
+                {
+                    int w = E[e].cost;
+                    int to = E[e].to;
+                    if (d[to] > d[k] + w)
+                    {
+                        p[to] = k;
+                        pe[to] = e;
+                        d[to] = d[k] + w;
+                        if (!inq[to])
+                        {
+                            q.push(to);
+                            inq[to] = 1;
+                        }
+                    }
+                }
+            }
+        }
+     
+     
+    }
+     
+    int check()
+    {
+        if (p[t] == -1) return -1;
+        int mx = inf;
+        int cur = t;
+        while (cur != s)
+        {
+            mx = min(mx, E[pe[cur]].cap - E[pe[cur]].f);
+            cur = p[cur];
+        }
+        cur = t;
+        while (cur != s)
+        {
+            E[pe[cur]].f += mx;
+            E[pe[cur] ^ 1].f -= mx;
+            cur = p[cur];
+        }
+        return mx * d[t];
+    }
+     
+    int mincost_maxflow()
+    {
+        int res = 0;
+        while (true)
+        {
+            augument();
+            int cur = check();
+            if (cur == -1) break;
+            res += cur;
+        }
+        return res;
+    }
+     
+    void add_edge(int f, int to, int cap, int cost)
+    {
+        g[f].push_back(int(E.size()));
+        E.push_back(edge(to, cap, cost));
+        g[to].push_back(int(E.size()));
+        E.push_back(edge(f, 0, -cost));
+    }
+
+    MCMF(){}
+    MCMF(int s, int t, int graphsize):s(s), t(t), graphsize(graphsize){
+        g.resize(graphsize);
+    }
+}; 
+
+\end{lstlisting}
+
+
+\section{core.cpp}
+\begin{lstlisting}
+#include "bits/stdc++.h"
+//#define int ll
+#define F first
+#define S second
+#define mp make_pair
+#define all(x) (x).begin(), (x).end()
+#define out(x) return void(cout << (x) << endl)
+#define OUT(x) ((cout << (x)), exit(0))
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+[[maybe_unused]]const int64_t INF = (int64_t)(2e18);
+[[maybe_unused]]const int inf = (int)(1e9 + 7);
+[[maybe_unused]]const int maxn = 500 * 1000 + 100;
+//------------------------------------------//
+
+
+
+
+int32_t main(){
+    ios_base::sync_with_stdio(false);
+    cout << fixed << setprecision(10);
+    cin.tie(nullptr);
+#ifdef _MY
+    freopen("VimProject/input.txt", "r", stdin);
+    freopen("VimProject/output.txt", "w", stdout);
+#endif
+
+
+    return 0;
+}
+
+\end{lstlisting}
+
+
+\section{stree pushes sum max.cpp}
+\begin{lstlisting}
+struct stree {
+    vector<int> t;
+    vector<int> p;
+    int n = 1;
+    stree() {}
+    stree(int nn) {
+        while (n < nn) n *= 2;
+        t.assign(2 * n, 0);
+        p.assign(2 * n, 0);
+    }
+    int val(int v) { return t[v] + p[v]; }
+    void push(int v) {
+        t[v] += p[v];
+        if (v < n) {
+            p[2 * v] += p[v];
+            p[2 * v + 1] += p[v];
+        }
+        p[v] = 0;
+    }
+    void upd(int v) { t[v] = max(val(2 * v), val(2 * v + 1)); }
+    int get(int l, int r, int v, int tl, int tr) {
+        if (tr == -1) tr = n;
+        if (tl == l && tr == r) return val(v);
+
+        push(v);
+        int res = 0;
+        int mid = (tl + tr) / 2;
+        if (l < mid) res = max(res, get(l, min(mid, r), 2 * v, tl, mid));
+        if (r > mid) res = max(res, get(max(l, mid), r, 2 * v + 1, mid, tr));
+        upd(v);
+
+        return res;
+    }
+    void set(int l, int r, int x, int v, int tl, int tr) {
+        if (tr == -1) tr = n;
+        if (tl == l && tr == r) return void(p[v] += x);
+
+        push(v);
+        int mid = (tl + tr) / 2;
+        if (l < mid) set(l, min(mid, r), x, 2 * v, tl, mid);
+        if (r > mid) set(max(l, mid), r, x, 2 * v + 1, mid, tr);
+        upd(v);
+    }
+    void set(int l, int r, int x) {
+        r = min(r, n);
+        l = max(l, 0ll);
+        set(l, r, x, 1, 0, n);
+    }
+    int get(int l, int r) {
+        r = min(r, n);
+        l = max(l, 0ll);
+        return get(l, r, 1, 0, n);
+    }
+};
+
+\end{lstlisting}
+
+
+\section{graph-of-blocks-and-cutpoints.cpp}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+//#define int int64_t
+#define all(x) (x).begin(), (x).end()
+#define out(x) return void(cout << x << endl)
+#define OUT(x) ((cout << x), exit(0))
+using namespace std;
+typedef long double db;
+const int64_t INF = (int64_t)(2e18);
+const int inf = (int)(1e9 + 7);
+//------------------------------------------//
+
+const int maxn = 3000 * 100 + 10;
+int curtime = 0;
+
+int color_edge[maxn];
+int tin[maxn];
+int fup[maxn];
+int added[maxn];
+vector<pair<int,int>> g[maxn];
+vector<int> g1[2 * maxn];
+
+vector<int> cuts;
+bool is_cut(int v) {
+    auto it = lower_bound(all(cuts), v);
+    if (it == cuts.end()) return false;
+    if (*it != v) return false;
+    return true;
+}
+void dfs_cuts(int v, int root) {
+    fup[v] = tin[v] = ++curtime;
+    int sons = 0;
+    bool is_cut = false;
+    for (auto e : g[v]) {
+        if (tin[e.first]) fup[v] = min(fup[v], tin[e.first]);
+        else {
+            ++sons;
+            dfs_cuts(e.first, root);
+            fup[v] = min(fup[v], fup[e.first]);
+            if (fup[e.first] >= tin[v]) is_cut = 1;
+        }
+    }
+    if (v == root && sons > 1) cuts.push_back(v);
+    if (v != root && is_cut) cuts.push_back(v);
+}
+
+vector<pair<int, int>> edges;
+int used[maxn];
+set<int> comps[maxn];
+int newcol = -1;
+void dfs_color(int v, int color, int par) {
+    used[v] = 1;
+    for (auto& e : g[v]) {
+        if (e.first == par) continue;
+
+        if (used[e.first] && tin[e.first] < tin[v])
+            color_edge[e.second] = color;
+        if (used[e.first]) continue;
+
+        if (fup[e.first] >= tin[v]) {
+            color_edge[e.second] = ++newcol;
+            dfs_color(e.first, newcol, v);
+        }
+        else {
+            color_edge[e.second] = color;
+            dfs_color(e.first, color, v);
+        }
+    }
+}
+
+set<int> res;
+bool dfs_find(int v, int goal) {
+    used[v] = 1;
+    if (v == goal) return true;
+    bool good = false;
+    for (auto& to : g1[v]) {
+        if (used[to]) continue;
+        good |= dfs_find(to, goal);
+    }
+    if (good && v < cuts.size())
+        res.insert(cuts[v]);
+    return good;
+}
+
+int32_t main() {
+    ios_base::sync_with_stdio(false);
+    cout << fixed << setprecision(10);
+    cin.tie(nullptr);
+#ifdef _MY
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+
+    int n, m; 
+    cin >> n >> m;
+
+    for (int i = 0; i < m; ++i) {
+        int a, b;
+        cin >> a >> b;
+        --a; --b;
+        edges.push_back({ a, b });
+        g[a].push_back({ b, i });
+        g[b].push_back({ a, i });
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (tin[i]) continue;
+        dfs_cuts(i, i);
+    }
+
+    newcol = (int)cuts.size() - 1;
+    for (int i = 0; i < n; ++i) {
+        if (used[i]) continue;
+        dfs_color(i, newcol, i);
+    }
+
+    sort(all(cuts));
+    for (int i = 0; i < m; ++i) {
+        int u = edges[i].first;
+        int v = edges[i].second;
+        added[u] = 1;
+        added[v] = 1;
+        if (is_cut(u)) {
+            int iu = int(lower_bound(all(cuts), u) - begin(cuts));
+            int iv = color_edge[i];
+            g1[iu].push_back(iv);
+            g1[iv].push_back(iu);
+        }
+        swap(u, v);
+        if (is_cut(u)) {
+            int iu = int(lower_bound(all(cuts), u) - begin(cuts));
+            int iv = color_edge[i];
+            g1[iu].push_back(iv);
+            g1[iv].push_back(iu);
+        }
+    }
+
+    int nn = (int)cuts.size() + newcol + 1;
+    for (int i = 0; i < nn; ++i) {
+        sort(all(g1[i]));
+        g1[i].resize(unique(all(g1[i])) - begin(g1[i]));
+    }
+
+    for (int i = 0; i < m; ++i) {
+        comps[edges[i].first].insert(color_edge[i]);
+        comps[edges[i].second].insert(color_edge[i]);
+    }
+    for (int i = 0; i < n; ++i) {
+        if (added[i]) continue;
+        comps[i].insert(++newcol);
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int f, t;
+        cin >> f >> t;
+        --f; --t;
+        fill(used, used + nn, 0);
+        int u = *comps[f].begin();
+        int v = *comps[t].begin();
+        res.clear();
+        dfs_find(u, v);
+        res.erase(f);
+        res.erase(t);
+        cout << res.size() << endl;
+        
+    }
+
+
+
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{lca.cpp}
+\begin{lstlisting}
+struct LCA
+{
+    int root = 0;
+    vi dep;
+    vector<vi> p;
+    void dfs(int v, int par, int curd, vector<vi>& g)
+    {
+        dep[v] = curd;
+        p[v][0] = par;
+
+        for (int i = 1; i < 20; ++i)
+        {
+            p[v][i] = p[p[v][i - 1]][i - 1];
+        }
+
+        for (auto& it : g[v])
+        {
+            if (it == par) continue;
+            dfs(it, v, curd + 1, g);
+        }
+    }
+    void init(vector<vi>& g)
+    {
+        dep.resize(g.size(), -1);
+        p.resize(g.size(), vi(20, -1));
+        dfs(root, root, 0, g);
+    }
+
+    int parent(int v, int h)
+    {
+        for (int i = 0; i < 20; ++i)
+        {
+            if (h & (1 << i))
+                v = p[v][i];
+        }
+        return v;
+    }
+
+    int lca(int a, int b)
+    {
+        if (dep[a] < dep[b]) swap(a, b);
+        a = parent(a, dep[a] - dep[b]);
+        if (a == b) return a;
+
+        for (int i = 19; i >= 0; --i)
+        {
+            if (p[a][i] != p[b][i])
+            {
+                a = p[a][i];
+                b = p[b][i];
+            }
+        }
+        return p[a][0];
+    }
+    LCA() {}
+    LCA(vector<vi>& g, int rt = 0):root(rt) { init(g); }
+};
+\end{lstlisting}
+
+
+\section{cutpoints.cpp}
+\begin{lstlisting}
+namespace FindAllCutPoints
+{
+    vector<int> points;
+    vector<int> fup, tin;
+    int tin_global = 0;
+
+    void dfs(int cur, int parent, vector<vector<int>>& g)
+    {
+        bool is_ans = false;
+        int sons = 0;
+        tin[cur] = ++tin_global;
+        fup[cur] = tin_global;
+        for (int i = 0; i < g[cur].size(); i++)
+        {
+            int to = g[cur][i];
+            if (tin[to] == 0)
+            {
+                dfs(to, cur, g);
+                sons++;
+                fup[cur] = min(fup[cur], fup[to]);
+                if (fup[to] >= tin[cur])
+                    is_ans = true;
+            }
+            else
+            {
+                if (to != parent)
+                {
+                    fup[cur] = min(fup[cur], tin[to]);
+                }
+            }
+        }
+        if ((cur != 0 && is_ans) || (cur == 0 && sons > 1)) points.push_back(cur);
+    }
+
+    vector<int> find_cutpoints(vector<vector<int>>& g)
+    {   
+        tin_global = 0;
+        int n = g.size();
+        fup.assign(n, -1);
+        tin.assign(n, 0);
+        points.clear();
+        dfs(0, -1, g);
+        return points;
+    }
+
+}
+using namespace FindAllCutPoints;
+\end{lstlisting}
+
+
+\section{time_counting.cpp}
+\begin{lstlisting}
+//before main
+#include <chrono>
+chrono::time_point<chrono::steady_clock> cl;
+double current_time() { return (chrono::steady_clock::now() - cl).count() / 1e9; }
+
+
+
+// at the beginning of main
+cl = chrono::steady_clock::now();
+
+// check time with
+double cur_seconds = current_time();
+
+\end{lstlisting}
+
+
+\section{binpow.cpp}
+\begin{lstlisting}
+ll binpow(ll a, ll p)
+{
+    ll res = 1;
+    for (; p; p >>= 1)
+    {
+        if (p & 1) res *= a;
+        a *= a;
+    }
+    return res;
+}
+\end{lstlisting}
+
+
+\section{manacher.cpp}
+\begin{lstlisting}
+template <typename T>
+vector<int> manacher(int n, const T &s) {
+  if (n == 0) {
+    return vector<int>();
+  }
+  vector<int> res(2 * n - 1, 0);
+  int l = -1, r = -1;
+  for (int z = 0; z < 2 * n - 1; z++) {
+    int i = (z + 1) >> 1;
+    int j = z >> 1;
+    int p = (i >= r ? 0 : min(r - i, res[2 * (l + r) - z]));
+    while (j + p + 1 < n && i - p - 1 >= 0) {
+      if (!(s[j + p + 1] == s[i - p - 1])) {
+        break;
+      }
+      p++;
+    }
+    if (j + p > r) {
+      l = i - p;
+      r = j + p;
+    }
+    res[z] = p;
+  }
+  return res;
+}
+template <typename T>
+vector<int> manacher(const T &s) {
+  return manacher((int) s.size(), s);
+}
+\end{lstlisting}
+
+
+\section{includes.cpp}
+\begin{lstlisting}
+#include <fstream>
+#include <random>
+#include <chrono>
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <set>
+#include <map>
+#include <queue>
+#include <bitset>
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <algorithm>
+#include <tuple>
+#include <unordered_set>
+#include <unordered_map>
+\end{lstlisting}
+
+
+\section{newdelete.cpp}
+\begin{lstlisting}
+const int Mb = 230;
+const int MAX_MEM = Mb * 1024 * 1024;
+size_t mpos = 0;
+char mem[MAX_MEM];
+inline void* operator new(size_t n)
+{
+    char * res = mem + mpos;
+    mpos += n;
+    assert(mpos <= MAX_MEM);
+    return (void*)res;
+}
+inline void operator delete(void*) {}
+
+\end{lstlisting}
+
+
+\section{persistent stree ptr.cpp}
+\begin{lstlisting}
+namespace stree_ns
+{
+#ifdef _MY
+    const int maxn = 8;
+#endif
+#ifndef _MY
+    const int maxn = 1000 * 1000 + 5;
+#endif
+
+    struct stree
+    {
+        //changable part
+        typedef int T;
+        static const T neutral = inf;
+        inline T func_get(T a, T b) { return min(a, b); }
+        inline void func_set(T& a, T& b) { a = b; }
+        //-------------
+
+        struct node
+        {
+            T val = neutral;
+            node* l = 0, *r = 0;
+        };
+
+
+        vector<node*> t;
+        stree() { t.push_back(new node()); }
+        node*& safe_ptr(node*& ptr) { return ptr ? ptr : ptr = new node(); }
+        int safe_get(node* ptr) { return ptr ? ptr->val : neutral; }
+        void build(vi& ar, node*& v, int tl = 0, int tr = maxn)
+        {
+            if (tl + 1 == tr) return void(v->val = ar[tl]);
+            int mid = (tl + tr) / 2;
+            if (tl < ar.size()) build(ar, safe_ptr(v->l), tl, mid);
+            if (mid < ar.size()) build(ar, safe_ptr(v->r), mid, tr);
+            v->val = func_get(safe_get(v->l), safe_get(v->r));
+        }
+        node* set(int i, T x, node* v, int tl = 0, int tr = maxn)
+        {
+            node* curv = new node(*v);
+            if (i == tl && i + 1 == tr) { func_set(curv->val, x); return curv; }
+            int mid = (tl + tr) / 2;
+            if (i < mid) curv->l = set(i, x, safe_ptr(v->l), tl, mid);
+            else curv->r = set(i, x, safe_ptr(v->r), mid, tr);
+            curv->val = func_get(safe_get(curv->l), safe_get(curv->r));
+            return curv;
+        }
+        int get(int l, int r, node* v, int tl = 0, int tr = maxn)
+        {
+            if (tl == l && tr == r) return v->val;
+            int mid = (tl + tr) / 2;
+            int res = neutral;
+            if (l < mid) res = func_get(res, get(l, min(r, mid), safe_ptr(v->l), tl, mid));
+            if (r > mid) res = func_get(res, get(max(l, mid), r, safe_ptr(v->r), mid, tr));
+            return res;
+        }
+    };
+
+    int ind = 0;
+    char c[1000];
+    void print(stree::node* t, int side = 0, int prside = 0)
+    {
+#ifdef _MY
+        if (!t) return;
+        c[ind] = side ^ prside ? '|' : ' ';
+        ++ind;
+        print(t->l, 0, side);
+        c[ind] = side ? '\\' : '/';
+        for (int i = 2; i <= ind; ++i) cout << ' ' << c[i] << ' ';
+        cout << '[' << t->val << ']' << endl;
+        print(t->r, 1, side);
+        --ind;
+#endif
+    }
+}
+\end{lstlisting}
+
+
+\section{mincore.cpp}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+
+
+int main()
+{
+
+
+
+	return 0;
+}
+\end{lstlisting}
+
+
+\section{treap.cpp}
+\begin{lstlisting}
+namespace my_treap {
+    mt19937 rng(0);
+    inline bool check(int l, int r) { return rng() % (l + r) < l; }
+
+    struct Node {
+        Node *l, *r;
+        int val;
+        int cnt = 1;
+        Node() {}
+        Node(int val) :val(val) { l = r = 0; }
+    };
+    typedef Node* treap;
+
+    inline int cnt(treap t) { return t ? t->cnt : 0; }
+    inline void upd(treap& t) { if (t) t->cnt = cnt(t->l) + 1 + cnt(t->r); }
+    inline void push(treap& t) {}
+
+    void split(treap& tl, treap& tr, treap t, int key)
+    {
+        push(t);
+        if (!t) return void(tl = tr = nullptr);
+        if (cnt(t->l) < key) {
+            split(t->r, tr, t->r, key - cnt(t->l) - 1);
+            upd(tl = t);
+        }
+        else {
+            split(tl, t->l, t->l, key);
+            upd(tr = t);
+        }
+    }
+    void merge(treap& t, treap tl, treap tr) {
+        push(tl); push(tr);
+        if (!tl || !tr) { t = tl ? tl : tr; }
+        else if (check(cnt(tl), cnt(tr))) {
+            merge(tl->r, tl->r, tr);
+            t = tl;
+        }
+        else {
+            merge(tr->l, tl, tr->l);
+            t = tr;
+        }
+        upd(t);
+    }
+    int at(treap& t, int i) {
+        treap t1, t2, t3;
+        split(t1, t2, t, i);
+        split(t2, t3, t2, 1);
+        int res = t2->val;
+        merge(t, t1, t2);
+        merge(t, t, t3);
+        return res;
+    }
+    treap build(vi& ar) {
+        treap t = nullptr;
+        for (auto& it : ar) merge(t, t, new Node(it));
+        return t;
+    }
+
+    int ind = 0;
+    char c[1000];
+    void print(Node* t, int side = 0, int prside = 0)
+	{
+#ifdef _MY
+		if (!t) return;
+		c[ind] = side ^ prside ? '|' : ' ';
+		++ind;
+		print(t->l, 0, side);
+		c[ind] = side ? '\\' : '/';
+		for (int i = 2; i <= ind; ++i) cout << ' ' << c[i] << ' ';
+		cout << '[' << t->val << ']' << endl;
+		print(t->r, 1, side);
+		--ind;
+#endif
+	}
+
+}
+using namespace my_treap;
+
+\end{lstlisting}
+
+
+\section{java example.cpp}
+\begin{lstlisting}
+import java.util.*;
+import java.math.*;
+import java.io.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        PrintWriter out = new PrintWriter(System.out);
+        
+        long one = Integer.MAX_VALUE / Integer.MAX_VALUE;
+        long zero = one - one;
+        long two = one + one;
+        long three = one + two;
+        
+        long n, k;
+        n = in.nextLong();
+        k = in.nextLong();
+        long m = (n - three*k + one) / two;
+        
+        m = Math.max(zero, m);
+        
+        out.println(m);
+        
+        out.close();
+    }
+}
+\end{lstlisting}
+
+
+\section{stree pushes ptr.cpp}
+\begin{lstlisting}
+//#pragma comment(linker, "/stack:200000000")
+//#pragma GCC optimize("O3")
+#include <bits/stdc++.h>
+#define int ll
+#define xx first
+#define yy second
+#define pb push_back
+#define all(x) begin(x), end(x)
+#define OUT(x) ((cout << x), exit(0))
+using namespace std;
+typedef double db;
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+const db eps = 1e-9;
+const db pi = acos(-1.0);
+const db dinf = 1e250;
+const ll INF = (ll)(2e18);
+const int inf = (int)(1e9 + 7);
+//------------------------------------------//
+
+map<int, vector<pii>> m;
+
+const int maxn = inf;
+
+struct node
+{
+    node* l = nullptr, * r = nullptr;
+    int32_t mx = 0, p = 0;
+};
+node*& safe_ptr(node*& ptr) { return ptr ? ptr : ptr = new node(); }
+int safe_get(node*& ptr) { return ptr ? ptr->mx + ptr->p : 0; }
+struct stree
+{
+    node* t;
+    stree() { t = new node(); }
+
+
+    void push(node* v, int tl, int tr)
+    {
+        if (tl == tr) return;
+        v->mx += v->p;
+        if (tl + 1 != tr)
+        {
+            safe_ptr(v->l)->p += v->p;
+            safe_ptr(v->r)->p += v->p;
+        }
+        v->p = 0;
+    }
+
+    void set(int l, int r, int x, node* v, int tl = 0, int tr = maxn)
+    {
+        if (tl == l && tr == r) return void(v->p += x);
+
+        push(v, tl, tr);
+
+        int mid = (tl + tr) / 2;
+        if (l < mid) set(l, min(mid, r), x, safe_ptr(v->l), tl, mid);
+        if (r > mid) set(max(mid, l), r, x, safe_ptr(v->r), mid, tr);
+
+        push(safe_ptr(v->l), tl, mid);
+        push(safe_ptr(v->r), mid, tr);
+        v->mx = max(safe_get(v->l), safe_get(v->r));
+    }
+    int get(int l, int r, node* v, int tl = 0, int tr = maxn)
+    {
+        push(v, l, r);
+        if (l == tl && r == tr) return v->mx;
+        int res = -INF;
+        int mid = (tl + tr) / 2;
+        if (l < mid) res = max(res, get(l, min(mid, r), safe_ptr(v->l), tl, mid));
+        if (r > mid) res = max(res, get(max(mid, l), r, safe_ptr(v->r), mid, tr));
+        return res;
+    }
+
+    int get_max_ind(node* v, int tl = 0, int tr = maxn)
+    {
+        push(v, tl, tr);
+
+        if (tl + 1 == tr) return tl;
+        int mid = (tl + tr) / 2;
+        if (safe_get(v->l) == v->mx) return get_max_ind(safe_ptr(v->l), tl, mid);
+        else return get_max_ind(safe_ptr(v->r), mid, tr);
+    }
+
+};
+
+int ind = 0;
+char c[1000];
+void print(node* t, int side = 0, int prside = 0)
+{
+#ifdef _MY
+    if (!t) return;
+    c[ind] = side ^ prside ? '|' : ' ';
+    ++ind;
+    print(t->l, 0, side);
+    c[ind] = side ? '\\' : '/';
+    for (int i = 2; i <= ind; ++i) cout << ' ' << c[i] << ' ';
+    cout << '[' << t->mx << "," << t->p << ']' << endl;
+    print(t->r, 1, side);
+    --ind;
+#endif
+}
+
+int32_t main()
+{
+    ios_base::sync_with_stdio(0);
+    cout << fixed << setprecision(10);
+    cin.tie(0);
+
+#ifdef _MY
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+
+    int n;
+    cin >> n;
+
+    set<pii> pts;
+
+    int res = 0;
+    pii resp;
+
+    m[0].pb({ 0,0 });
+    for (int i = 0; i < n; ++i)
+    {
+        int x, y, c;
+        cin >> x >> y >> c;
+        m[min(x, y)].pb({ max(x,y), c });
+        pts.insert({ x,y });
+        
+    }
+
+    for (int i = 0; ; ++i)
+    {
+        if (!pts.count({ i,i }))
+        {
+            resp = { i,i };
+            break;
+        }
+    }
+
+
+
+    stree tr;
+
+
+    set<int> s;
+    for (auto& it : m)
+    {
+        s.insert(it.xx);
+        for (auto& itt : it.yy)
+            s.insert(itt.xx);
+    }
+    auto its1 = s.begin();
+    auto its2 = its1; ++its2;
+
+
+
+
+    for (; its1 != s.end(); ++its1, its2 == s.end() ? its2 : ++its2)
+    {
+        if (its2 != s.end())
+            tr.set(*its1, *its2, -*its1, tr.t);
+        else
+            tr.set(*its1, maxn, -*its1, tr.t);
+    }
+    //print(tr.t);
+
+    for (auto& it : m)
+    {
+        for (auto& itt : it.yy)
+            tr.set(itt.xx, maxn, itt.yy, tr.t);
+        
+    }
+
+
+    
+
+    auto it1 = m.begin();
+    auto it2 = it1; ++it2;
+
+    for (; it2 != m.end(); ++it1, ++it2)
+    {
+        //print(tr.t); cout << endl;
+        if (safe_get(tr.t) > res)
+        {
+            res = safe_get(tr.t);
+            resp = { it1->xx, tr.get_max_ind(tr.t) };
+        }
+        //print(tr.t); cout << endl;
+        for (auto& itt : it1->yy) tr.set(itt.xx, maxn, -itt.yy, tr.t);
+        tr.set(it1->xx, maxn, it2->xx - it1->xx, tr.t);
+        tr.set(it1->xx, it2->xx, -INF, tr.t);
+    }
+
+    cout << res << endl;
+    cout << resp.xx << " " << resp.xx << " " << resp.yy << " " << resp.yy;
+
+
+    return 0;
+}
+\end{lstlisting}
+
+
+\section{gp_hash_table.cpp}
+\begin{lstlisting}
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace __gnu_pbds;
+gp_hash_table<int, int> table;
+
+\end{lstlisting}
+
+
+\section{stree pushes sum inc.cpp}
+\begin{lstlisting}
+struct stree {
+    vector<int> t;
+    vector<int> p;
+    int n = 1;
+    stree() {}
+    stree(int nn) {
+        while (n < nn) n *= 2;
+        t.assign(2 * n, 0);
+        p.assign(2 * n, 0);
+    }
+    void push(int v, int tl, int tr) {
+        t[v] += p[v] * (tr - tl);
+        if (v < n) {
+            p[v + v] += p[v];
+            p[v + v + 1] += p[v];
+        }
+        p[v] = 0;
+    }
+    void set(int l, int r, int x, int v = 1, int tl = 0, int tr = -1) {
+        if (tr == -1) tr = n;
+        if (l >= r) return;
+        push(v, tl, tr);
+        if (l == tl && r == tr) return void(p[v] += x);
+        int mid = (tl + tr) / 2;
+        if (l < mid) set(l, min(r, mid), x, v + v, tl, mid);
+        if (r > mid) set(max(l, mid), r, x, v + v + 1, mid, tr);
+        if (v < n) {
+            push(v + v, tl, mid);
+            push(v + v + 1, mid, tr);
+        }
+        t[v] = t[v + v] + t[v + v + 1];
+    }
+    int get(int l, int r, int v = 1, int tl = 0, int tr = -1) {
+        if (tr == -1) tr = n;
+        if (l >= r) return 0;
+        push(v, tl, tr);
+        if (l == tl && r == tr) return t[v];
+        int mid = (tl + tr) / 2;
+        int res = 0;
+        if (l < mid) res += get(l, min(r, mid), v + v, tl, mid);
+        if (r > mid) res += get(max(l, mid), r, v + v + 1, mid, tr);
+        return res;
+    }
+};
+\end{lstlisting}
+
+
+\section{dsu_rollback.cpp}
+\begin{lstlisting}
+struct dsu {
+    vector<int> p, s, B;
+    dsu() {}
+    dsu(int n) {
+        p.resize(n);
+        s.assign(n, 1);
+        iota(all(p), 0);
+    }
+    int root(int v) { return p[v] == v ? v : root(p[v]); }
+    void unite(int a, int b) {
+        a = root(a);
+        b = root(b);
+        if (a == b) { B.push_back(-1); return; }
+        if (s[a] < s[b]) swap(a, b);
+        s[a] += s[b];
+        p[b] = a;
+        B.push_back(b);
+    }
+    void rollback() {
+        int b = B.back();
+        B.pop_back();
+		if (b == -1) return;
+        s[p[b]] -= s[b];
+        p[b] = b;
+    }
+};
+
+\end{lstlisting}
+
+
+\section{dsu.cpp}
+\begin{lstlisting}
+struct dsu {
+    vi p, s;
+    dsu() {}
+    dsu(int n) {
+        p.resize(n);
+        s.assign(n, 1);
+        iota(all(p), 0);
+    }
+    int root(int v) {
+        if (p[v] != v) p[v] = root(p[v]);
+        return p[v];
+    }
+    void unite(int a, int b) {
+        a = root(a);
+        b = root(b);
+        if (a == b) return;
+        if (s[b] > s[a]) swap(a, b);
+        p[b] = a;
+        s[a] += s[b];
+    }
+
+};
+
+\end{lstlisting}
+
+
+\section{TeamReferenceHeader.tex}
+\begin{lstlisting}
+\documentclass[a4paper,12pt]{report}
+\usepackage[T2A]{fontenc}
+\usepackage[english,russian]{babel}     %russian support
+\usepackage{indentfirst}                %first paragraph will be with indent
+\usepackage{amsmath}                    %equations
+\usepackage{listings}
+\lstset{
+    language=C++,
+    breaklines=true, 
+    numbers=left,
+    basicstyle=\ttfamily,
+} 
+
+\end{lstlisting}
+
+
+\section{sufarray.cpp}
+\begin{lstlisting}
+vi sufarray(string s)
+{
+    vi p;
+    vi c;
+
+    s += char(int(31));
+    int n = s.size();
+
+    p.resize(n);
+    c.resize(n);
+
+    c[0] = 0;
+    for (int i = 0; i < n; i++)
+    {
+        p[i] = i;
+    }
+
+    sort(all(p), [&s](int a, int b) { return s[a] < s[b]; });
+
+    int curclass = 0;
+    c[p[0]] = 0;
+    for (int i = 1; i < n; i++)
+    {
+        if (s[p[i]] != s[p[i - 1]]) ++curclass;
+        c[p[i]] = curclass;
+    }
+
+
+    for (int i = 2; i < n; i <<= 1)
+    {
+        vi cswap(n, inf);
+        vector<pii> next;
+        for (int j = 0; j < n; j++)
+            next.pb({ p[j], (p[j] + (i >> 1)) % n });
+
+        sort(all(next),
+            [&c](pii a, pii b)
+            {
+                if (c[a.first] != c[b.first]) return c[a.first] < c[b.first];
+                return c[a.second] < c[b.second];
+            });
+
+        for (int j = 0; j < next.size(); j++)
+        {
+            p[j] = next[j].first;
+        }
+
+        int curclass = 0;
+        cswap[p[0]] = 0;
+        for (int j = 1; j < n; ++j)
+        {
+            pii& a = next[j];
+            pii& b = next[j - 1];
+            if (c[a.first] != c[b.first] || c[a.second] != c[b.second]) ++curclass;
+            cswap[p[j]] = curclass;
+        }
+
+        swap(c, cswap);
+
+    }
+
+    vi res(p.begin() + 1, p.end());
+    return res;
+
+}
+
+\end{lstlisting}
+
+
+\section{geom igor.cpp}
+\begin{lstlisting}
+int sgn(const ld &a) { return (a > eps ? 1 : (a < -eps ? -1 : 0)); }
+
+struct pt {
+    ld x, y;
+    pt(ld x = 0, ld y = 0) : x(x), y(y) {}
+    const pt operator-(const pt &a)     const { return pt(x - a.x, y - a.y); }
+    const pt operator+(const pt &a)     const { return pt(x + a.x, y + a.y); }
+    const pt operator*(const ld &a)     const { return pt(x * a, y * a); }
+    const pt operator/(const ld &a)     const { return pt(x / a, y / a); }
+    const ld operator^(const pt &a)     const { return (x * a.y - y * a.x); }
+    const ld operator*(const pt &a)     const { return (x * a.x + y * a.y); }
+    const bool operator<(const pt &a)   const { return sgn(x - a.x) == -1 || (sgn(x - a.x) == 0 && sgn(y - a.y) == -1); }
+    const bool operator==(const pt &a)  const { return sgn(x - a.x) == 0 && sgn(y - a.y) == 0; }
+    const ld sqdist()                   const { return sq(x) + sq(y); }
+    const ld dist()                     const { return sqrtl((ld)sqdist()); }
+    const pt norm(const ld &a)          const { return pt(x, y) * (a / dist()); }
+    const pt rotateCW(const ld &ang)    const { return pt(x * cosl(ang) - y * sinl(ang),  x * sinl(ang) + y * cosl(ang)); }
+    const pt rotateCCW(const ld &ang)   const { return pt(x * cosl(ang) + y * sinl(ang), -x * sinl(ang) + y * cosl(ang)); }
+};
+
+ld ang(pt a, pt b) { return atan2l(a ^ b, a * b); }
+
+struct line {
+    ld a, b, c;
+    line(pt p1, pt p2) {
+        a = -(p2.y - p1.y);
+        b =  (p2.x - p1.x);
+        c = -(a * p1.x + b * p1.y);
+        fix();
+    }
+    line(ld a = 1, ld b = 0, ld c = 0) : a(a), b(b), c(c) { fix(); }
+    void fix() {
+        ld d = sqrt(sq(a) + sq(b));
+        a /= d; b /= d; c /= d;
+        if (sgn(a) == -1 || (sgn(a) == 0 && sgn(b) == -1))
+            a = -a, b = -b, c = -c;
+    }
+    const ld dist(const pt &p)        const { return fabsl(a * p.x + b * p.y + c); }
+    const ld orientdist(const pt &p)  const { return a * p.x + b * p.y + c; }
+    const pt proj(const pt &p)        const { return p - pt(a, b) * orientdist(p); }
+    const pt symm(const pt &p)        const { return p - pt(a, b) * (orientdist(p) * 2.0); }
+};
+
+struct segment {
+    pt a, b;
+    segment(pt a = pt(), pt b = pt(1)) : a(a), b(b) {}
+    const bool on_segment(const pt &p) const { return sgn((a - b).dist() - (a - p).dist() - (b - p).dist()) == 0; }
+    const ld dist(const pt &p)         const { line l(a, b);
+        return (on_segment(l.proj(p)) ? l.dist(p) : min((a - p).dist(), (b - p).dist()));
+    }
+};
+
+struct circle {
+    pt center;
+    ld r;
+    circle(pt center = pt(), ld r = 1) : center(center), r(r) {}
+    const bool on_circle(const pt &p) const { return sgn((center - p).dist() - r) ==  0; }
+    const bool in_circle(const pt &p) const { return sgn((center - p).dist() - r) == -1; }
+    const bool out_crcle(const pt &p) const { return sgn((center - p).dist() - r) ==  1; }
+    const ld dist_out_circle(const pt &a, const pt &b) {
+        segment s(a, b);
+        line    l(a, b);
+        pt maybe_in = l.proj(center);
+        if (s.on_segment(maybe_in) && in_circle(maybe_in)) {
+            ld st1 = sqrtl((center - a).sqdist() - sq(r));
+            ld st2 = sqrtl((center - b).sqdist() - sq(r));
+            ld ang1 = PI / 2 - atan2l(r, st1);
+            ld ang2 = PI / 2 - atan2l(r, st2);
+            return st1 + st2 + r * (fabsl(ang(a - center, b - center)) - ang1 - ang2);
+        }
+        return (a - b).dist();
+    }
+};
+
+struct polygon {
+    vector<pt> v;
+    polygon(vector<pt> v = vector<pt>()) : v(v) {}
+
+    int det(pt a, pt b, pt c) {
+        return sgn((c - b) ^ (b - a));
+    }
+    vector<pt> convex() {
+        sort(all(v));
+        vector<pt> cvx;
+        pt be = v.front(), en = v.back();
+        set<pt> up, dn;
+        for (int i = 0; i < v.size(); ++i) {
+            if (det(be, v[i], en) >= 0) up.insert(v[i]);
+            if (det(be, v[i], en) <= 0) dn.insert(v[i]);
+        }
+        for (sit it = up.begin(); it != up.end(); ++it) {
+            sit c = it;     if (*c == be) continue;
+            sit b = c; --b; if (*b == be) continue;
+            sit a = b; --a;
+            if (det(*a, *b, *c) <= 0) { up.erase(b); --it; }
+        }
+        for (sit it = dn.begin(); it != dn.end(); ++it) {
+            sit c = it;     if (*c == be) continue;
+            sit b = c; --b; if (*b == be) continue;
+            sit a = b; --a;
+            if (det(*a, *b, *c) >= 0) { dn.erase(b); --it; }
+        }
+        for (sit it = ++up.begin(); it != up.end(); ++it) cvx.pb(*it);
+        for (set<pt>::reverse_iterator it = ++dn.rbegin(); it != dn.rend(); ++it) cvx.pb(*it);
+        return cvx;
+    }
+    ld perimeter() {
+        ld ans = 0;
+        for (int i = 0; i < v.size(); ++i)
+            ans += (v[i] - v[(i + 1) % v.size()]).dist();
+        return ans;
+    }
+    ld square() {
+        ld ans = 0;
+        for (int i = 0; i < v.size(); ++i)
+            ans += v[i] ^ v[(i + 1) % v.size()];
+        return fabsl(ans) / 2.0;
+    }
+};
+
+struct intersections {
+    static int line_line(const line &a, const line &b, pt &p) {
+        pt v_a(a.a, a.b);
+        pt v_b(b.a, b.b);
+        if (v_a == v_b && sgn(a.c - b.c) == 0) return 2;
+        if (v_a == v_b && sgn(a.c - b.c) != 0) return 0;
+        ld d0 = a.a * b.b - a.b * b.a;
+        p = pt(a.c * b.b - a.b * b.c, a.a * b.c - a.c * b.a) / (-d0);
+        return 1;
+    }
+    static int line_circle(const circle &C, const line &L, pt &one, pt &two) {
+        pt p = L.proj(C.center);
+        if (C.on_circle(p)) { one = two = p; return 1; }
+        if (C.out_crcle(p)) return 0;
+        if (C.in_circle(p)) {
+            pt vec = pt(-L.b, L.a) * sqrtl(sq(C.r) - (C.center - p).sqdist());
+            one = p + vec;
+            two = p - vec;
+            return 2;
+        }
+        return -1;
+    }
+    static int circle_circle(const circle &a, const circle &b, pt &one, pt &two) {
+        line l = line(-2.0 * a.center.x + 2.0 * b.center.x,
+            -2.0 * a.center.y + 2.0 * b.center.y,
+            sq(a.center.x) + sq(a.center.y) -
+            sq(b.center.x) - sq(b.center.y) -
+            sq(a.r) + sq(b.r));
+        return line_circle(b, l, one, two);
+    }
+    static int segment_segment(const segment &a, const segment &b, pt &p) {
+        bool cross = (sgn((a.a - b.a) ^ (a.b - b.a)) * sgn((a.a - b.b) ^ (a.b - b.b)) <= 0 &&
+            sgn((b.a - a.a) ^ (b.b - a.a)) * sgn((b.a - a.b) ^ (b.b - a.b)) <= 0);
+        ld xy = max(min(a.a.y, a.b.y), min(b.a.y, b.b.y));
+        ld xx = max(min(a.a.x, a.b.x), min(b.a.x, b.b.x));
+        ld ny = min(max(a.a.y, a.b.y), max(b.a.y, b.b.y));
+        ld nx = min(max(a.a.x, a.b.x), max(b.a.x, b.b.x));
+        bool bbox = (sgn(nx - xx) >= 0 && sgn(ny - xy) >= 0);
+        if (cross && bbox) return line_line(line(a.a, a.b), line(b.a, b.b), p);
+        return 0;
+    }
+};
+\end{lstlisting}
+
+
+\section{z func.cpp}
+\begin{lstlisting}
+template<class t>
+vector<int> z_func(t s) {
+    vector<int> z(s.size(), 0);
+    int l = 0;
+    int r = 0;
+    for (int i = 1; i < s.size(); i++) {
+        int count = 0;
+        if (i <= r)  count = min(z[i - l], r - i + 1);
+        for (int j = count; i + j < s.size() && s[j] == s[i + j]; j++)
+            count++;
+        z[i] = count;
+        if (i + count >= r){
+            l = i;
+            r = i + count - 1;
+        }
+    }
+    return z;
+}
+\end{lstlisting}
+
+
+\section{prefix func.cpp}
+\begin{lstlisting}
+template<class t>
+vector<int> p_func(t s) {
+    int n = s.size();
+    vector<int> p(n, 0);
+    for (int i = 1; i < n; i++) {
+        p[i] = p[i - 1];
+        while (p[i] > 0 && s[i] != s[p[i]])
+            p[i] = p[p[i] - 1];
+        if (s[i] == s[p[i]]) p[i]++;
+    }
+    return p;
+}
+\end{lstlisting}
+
+
+\end{document}
