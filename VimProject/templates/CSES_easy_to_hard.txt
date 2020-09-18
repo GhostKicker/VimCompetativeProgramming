@@ -1,0 +1,200 @@
+3684 Weird Algorithm
+2880 Missing Number
+2571 Repetitions
+2408 Increasing Array
+2126 Permutations
+1514 Number Spiral
+1363 Distinct Numbers
+1299 Dice Combinations
+1285 Bit Strings
+1170 Trailing Zeros
+1169 Two Sets
+1142 Minimizing Coins
+1118 Two Knights
+1049 Coin Combinations I
+1039 Coin Piles
+1015 Apartments
+1002 Removing Digits
+969 Ferris Wheel
+931 Palindrome Reorder
+907 Creating Strings I
+863 Counting Rooms
+846 Book Shop
+845 Grid Paths
+841 Coin Combinations II
+805 Apple Division
+790 Stick Lengths
+778 Maximum Subarray Sum
+768 Sum of Two Values
+746 Concert Tickets
+704 Towers
+703 Playlist
+681 Restaurant Customers
+667 Range Sum Queries I
+656 Exponentiation
+654 Movie Festival
+623 Building Roads
+598 Money Sums
+579 Increasing Subsequence
+572 Edit Distance
+560 Range Sum Queries II
+555 Range Minimum Queries I
+552 Labyrinth
+545 Message Route
+540 Rectangle Cutting
+536 Array Description
+534 Removal Game
+520 Building Teams
+519 Two Sets II
+503 Range Xor Queries
+500 Chessboard and Queens
+493 Range Minimum Queries II
+480 Subarray Sums I
+469 Sum of Three Values
+446 Traffic Lights
+428 Subordinates
+426 Factory Machines
+425 Range Update Queries
+420 Round Trip
+419 Counting Divisors
+408 Room Allocation
+407 Exponentiation II
+404 Tasks and Deadlines
+399 Tree Diameter
+394 Shortest Routes II
+393 Array Division
+392 Projects
+387 Nearest Smaller Values
+382 Shortest Routes I
+376 Hotel Queries
+375 Sum of Four Values
+363 Subarray Divisibility
+358 Subarray Sums II
+346 Sliding Median
+345 Reading Books
+323 Common Divisors
+315 Forest Queries
+294 Tree Distances I
+285 Monsters
+279 Binomial Coefficients
+276 Tree Matching
+266 Course Schedule
+256 Flight Discount
+253 Tree Distances II
+253 Sliding Cost
+251 Distance Queries
+249 Shortest Subsequence
+248 Maximum Subarray Sum II
+248 List Removals
+247 Salary Queries
+242 Counting Bits
+241 Grid Paths
+233 String Matching
+233 Fibonacci Numbers
+229 Company Queries I
+228 High Score
+227 Cycle Finding
+226 Subarray Sum Queries
+224 Subtree Queries
+224 Creating Strings II
+222 Company Queries II
+209 Game Routes
+209 Advertisement
+207 Distributing Apples
+206 Distinct Colors
+202 Movie Festival II
+197 Road Reparation
+196 Sum of Divisors
+192 Distinct Values Queries
+189 Round Trip II
+188 Road Construction
+186 Nim Game I
+184 Counting Paths
+183 Flight Routes
+176 Path Queries
+174 Nim Game II
+173 Longest Flight Route
+173 Finding Borders
+171 Throwing Dice
+169 Planets Queries I
+168 Christmas Party
+166 Planets and Kingdoms
+165 Investigation
+154 Forest Queries II
+148 Flight Routes Check
+142 Stick Game
+140 Longest Palindrome
+136 Range Updates and Sums
+131 Dice Probability
+130 Meet in the Middle
+125 Minimal Rotation
+121 Graph Paths I
+120 Polynomial Queries
+114 Prüfer Code
+112 Word Combinations
+112 Finding Periods
+112 Coin Collector
+111 Candy Lottery
+110 Bit Inversions
+108 Inversion Probability
+108 Giant Pizza
+107 Stair Game
+107 Planets Queries II
+106 School Dance
+106 Maximum Building I
+103 Planets Cycles
+102 Number Grid
+102 Edge Directions
+97 Mail Delivery
+95 Writing Numbers
+95 Stick Divisions
+95 Graph Paths II
+95 Download Speed
+93 Teleporters Path
+91 String Removals
+91 Maximum Xor Subarray
+86 Knight's Tour
+85 Increasing Subsequence II
+84 Police Chase
+84 De Bruijn Sequence
+79 Range Queries and Copies
+75 Hamiltonian Flights
+75 Distinct Routes
+73 Sorting Methods
+72 Book Shop II
+70 Swap Game
+70 Elevator Rides
+69 Permutations II
+69 Moving Robots
+67 Required Substring
+66 Grid Paths
+61 Visiting Cities
+60 Graph Girth
+59 Cyclic Array
+57 School Excursion
+54 Intersection Points
+54 Chess Tournament
+52 Tree Traversals
+51 Empty String
+50 Network Breakdown
+49 String Transform
+47 Bit Problem
+46 Tree Isomorphism I
+45 Food Division
+41 Network Renovation
+41 Course Schedule II
+39 Tree Isomorphism II
+39 Area of Rectangles
+38 Movie Festival Queries
+36 String Reorder
+35 Maximum Building II
+33 Pyramid Array
+33 Flight Route Requests
+29 Coin Grid
+25 Forbidden Cities
+25 Coding Company
+24 Critical Cities
+22 Swap Round Sorting
+21 Creating Offices
+19 New Flight Routes
+16 Robot Path
