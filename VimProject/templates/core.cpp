@@ -9,9 +9,15 @@
 using namespace std;
 typedef long long ll;
 typedef long double ld;
+<<<<<<< HEAD
 const int64_t INF = (int64_t)(2e18);
 const int inf = (int)(1e9 + 7);
 const int maxn = 500 * 1000 + 100;
+=======
+[[maybe_unused]]const int64_t INF = (int64_t)(2e18);
+[[maybe_unused]]const int inf = (int)(1e9 + 7);
+[[maybe_unused]]const int maxn = 500 * 1000 + 100;
+>>>>>>> f22942ecca212b77c4dda28c8ea8a9e20aaed2c2
 //------------------------------------------//
 
 
