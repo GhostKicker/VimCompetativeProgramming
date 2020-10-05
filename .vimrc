@@ -14,13 +14,13 @@ filetype plugin indent on    " required
 " see :h vundle for more details or wiki for FAQ
 
 
-let g:netrw_liststyle = 3
+syntax on
 colorscheme desert
+let g:netrw_liststyle = 3
 
 "wildmenu lazyredraw visualbell number ruler expandtab tabstop shiftwidth autoindent smarttab smartindent
 set wmnu lz vb nu ru et ts=4 sw=4 ai sta si 
 set gfn=consolas "guifont
-syntax on
 set encoding=utf-8
 set t_Co=256
 
@@ -51,18 +51,24 @@ endfunction
 
 function! ClearSource()
 if has('unix')
-    silent execute "normal :!cp $HOME/VimProject/templates/core.cpp $HOME/VimProject/source.cpp \<CR>"
+    silent !cp $HOME/VimProject/templates/core.cpp $HOME/VimProject/source.cpp
 endif
 if has('win32')
-    silent !copy C:\\users\\afadeev\\VimProject\\templates\\core.cpp C:\\users\\afadeev\\VimProject\\source.cpp
+    silent !copy \%userprofile\%\\VimProject\\templates\\core.cpp \%userprofile\%\\VimProject\\source.cpp
 endif
     redraw!
 endfunction
 
 "======================================
 
-nnoremap <silent> <F6> <C-w>h<C-w>k:windo w<bar> :!(g++ -D_MY -Wall -Wno-unused-result -std=c++17 -g  % -o %:r 2>&1 \| tee VimProject/CompileMessage.txt) && gdb %:r <CR>
-nnoremap <silent> <F5> <C-w>h<C-w>k:windo w<bar> :!(g++ -D_MY -Wall -Wno-unused-result -std=c++17 -O2 % -o %:r 2>&1 \| tee VimProject/CompileMessage.txt) && %:r <CR>
+if has('win32')
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -g  % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
+endif
+if has('unix')
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -g  % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
+endif
  
 vmap <C-c> "+y
 nmap <C-a> ggVG
@@ -89,7 +95,10 @@ endif
 "----------LATEX----------
 
 let g:tex_flavor = 'latex'
-
+let g:vimtex_view_general_viewer = 'SumatraPDF'
+let g:vimtex_view_general_options
+    \ = '-reuse-instance -forward-search @tex @line @pdf'
+let g:vimtex_view_general_options_latexmk = '-reuse-instance'
 func SpellCheckRu()
     set spell spelllang=ru
 endfunction

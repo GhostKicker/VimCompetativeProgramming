@@ -1,4 +1,4 @@
-/*
+
 namespace GEOMA_INT{
     typedef long long ll;
     bool eq(ll a, ll b){return a == b;}
@@ -51,10 +51,37 @@ namespace GEOMA_INT{
     };
     bool is_inside(pt p, circle c){ return dist2(p, c.c) < c.r*c.r; }
     bool on_surface(pt p, circle c){ return dist2(p, c.c) == c.r*c.r; }
+
+    vector<pt> convex_hull(vector<pt> pts){
+        sort(all(pts));
+        pt pl = pts[0];
+        for (int i = (int)pts.size() - 1; i >= 0; --i){
+            pts[i] = pts[i] - pts[0];
+        }
+        sort(pts.begin() + 1, pts.end(), [](pt a, pt b){
+                    if (cross(a, b) > 0) return false;
+                    if (cross(a, b) < 0) return true;
+                    return dist2(a) < dist2(b);
+                });
+        vector<pt> order;
+        order.push_back(pts[0]);
+        for (int i = 1; i < (int)pts.size(); ++i){
+            while(order.size() >= 2){
+                pt arg1 = pts[i] - order.back();
+                pt arg2 = order.back() - order[(int)order.size() - 2];
+                if (cross(arg1, arg2) > 0) break;
+                order.pop_back();
+            }
+            order.push_back(pts[i]);
+        }
+        for (auto& it : order) it = it + pl;
+        return order;
+
+    }
 };
 using namespace GEOMA_INT;
-*/
 
+/*
 namespace GEOMA_REAL{
     typedef long double ld;
     const ld eps = 1e-6;
@@ -214,4 +241,4 @@ namespace GEOMA_REAL{
     }
 };
 using namespace GEOMA_REAL;
-
+*/
