@@ -1,0 +1,7 @@
+VimProject\source.cpp: In function 'int32_t main()':
+VimProject\source.cpp:94:9: warning: unused variable '_' [-Wunused-variable]
+     int _ = getint<int>();
+         ^
+VimProject\source.cpp:133:9: warning: unused variable 'cntbad' [-Wunused-variable]
+     int cntbad = 0;
+         ^~~~~~
