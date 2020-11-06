@@ -23,16 +23,19 @@ namespace FindAllCutPoints {
                 }
             }
         }
-        if ((cur != 0 && is_ans) || (cur == 0 && sons > 1)) points.push_back(cur);
+        if ((cur != parent && is_ans) || (cur == parent && sons > 1)) points.push_back(cur);
     }
 
     vector<int> find_cutpoints(vector<vector<int>>& g) {   
         tin_global = 0;
-        int n = g.size();
+        int n = (int)g.size();
         fup.assign(n, -1);
         tin.assign(n, 0);
         points.clear();
-        dfs(0, -1, g);
+        for (int i = 0; i < n; ++i) {
+            if (tin[i] != 0) continue;
+            dfs(i, i, g);
+        }
         return points;
     }
 

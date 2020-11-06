@@ -1,9 +1,5 @@
 #include "bits/stdc++.h"
-#include <chrono>
 //#define int ll
-#define F first
-#define S second
-#define mp make_pair
 #define all(x) (x).begin(), (x).end()
 #define out(x) return void(cout << (x) << endl)
 #define OUT(x) ((cout << (x)), exit(0))

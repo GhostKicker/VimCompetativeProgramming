@@ -1,18 +1,30 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
+set pythonthreedll=python38.dll
+
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'lervag/vimtex'
+"Plugin 'SirVer/ultisnips'
 call vundle#end()            " required
 filetype plugin indent on    " required
+
+"----SNIPPETS----
+"if has('python3')
+"  silent! python3 1
+"endif
+"let g:UltiSnipsExpandTrigger="<tab>"
+"let g:UltiSnipsJumpForwardTrigger="<tab>"
+"let g:UltiSnipsJumpBackwardTrigger="<s-tab>"
+"let g:UltiSnipsEditSplit="vertical"
+"----SNIPPETS----
 
 " :PluginList       - lists configured plugins
 " :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
 " :PluginSearch foo - searches for foo; append `!` to refresh local cache
 " :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
 " see :h vundle for more details or wiki for FAQ
-
 
 syntax on
 colorscheme desert
@@ -62,12 +74,12 @@ endfunction
 "======================================
 
 if has('win32')
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -g  % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wsign-conversion -Wno-unused-result -std=c++17 -g  % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wsign-conversion -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
 endif
 if has('unix')
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -g  % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wsign-conversion  -Wno-unused-result -std=c++17 -g  % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wsign-conversion  -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
 endif
  
 vmap <C-c> "+y
@@ -93,6 +105,11 @@ endif
 
 
 "----------LATEX----------
+
+function! Gomaga()
+    tabnew 
+    E $HOME/Desktop/Works/Maga
+endfunction
 
 let g:tex_flavor = 'latex'
 let g:vimtex_view_general_viewer = 'SumatraPDF'
@@ -136,3 +153,4 @@ autocmd filetype tex vnoremap <Up> g<Up>
 autocmd filetype tex vnoremap <Down> g<Down>
 autocmd filetype tex nnoremap <Up> g<Up>
 autocmd filetype tex nnoremap <Down> g<Down> 
+
