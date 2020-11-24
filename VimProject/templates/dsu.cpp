@@ -1,5 +1,5 @@
 struct dsu {
-    vi p, s;
+    vector<int> p, s;
     dsu() {}
     dsu(int n) {
         p.resize(n);
