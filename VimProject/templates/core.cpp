@@ -8,11 +8,7 @@ const int64_t INF = (int64_t)(2e18);
 const int inf = (int)(1e9 + 7);
 const int maxn = 500 * 1000 + 100;
 chrono::time_point<chrono::steady_clock> cl;
-<<<<<<< HEAD
 double current_time() { return (double)(chrono::steady_clock::now() - cl).count() / 1e9; }
-=======
-double current_time() { return (chrono::steady_clock::now() - cl).count() / 1e9; }
->>>>>>> 78789114b3861207492425bb09e00d0cc282344c
 //------------------------------------------//
 
 
