@@ -1,3 +1,8 @@
+#ifndef _MY
+#pragma GCC optimize("Ofast")
+#pragma GCC optimize("unroll-loops")
+#pragma GCC target("sse,sse2,sse3,ssse3,abm,mmx,tune=native")
+#endif
 #include "bits/stdc++.h"
 //#define int ll
 #define all(x) (x).begin(), (x).end()

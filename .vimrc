@@ -7,6 +7,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'lervag/vimtex'
 Plugin 'morhetz/gruvbox'
+Plugin 'grwlf/xkb-switch'
 "Plugin 'SirVer/ultisnips'
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -24,11 +25,15 @@ if has('gui_running')
 endif
 let g:netrw_liststyle = 3
 
+
 "wildmenu lazyredraw visualbell number ruler expandtab tabstop shiftwidth autoindent smarttab smartindent
 set wmnu lz vb nu ru et ts=4 sw=4 ai sta si 
 set gfn=consolas "guifont
 set encoding=utf-8
 set t_Co=256
+
+" Disable autocommenting
+autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
 
 set spr sb "splitright splitbelow
 set hls is ar "hlsearch incsearch autoread
@@ -36,7 +41,7 @@ set hls is ar "hlsearch incsearch autoread
 set guioptions-=T
 set guioptions-=m
 
-set mouse=a
+set mouse=a 
 set showcmd
 
 set whichwrap+=<,>,[,]
@@ -58,20 +63,21 @@ function! SetupBrute()
     call Setup()
     tabnew $HOME/VimProject/brute/generate.cpp
     tabnew $HOME/VimProject/brute/testsource.cpp
+    vs $HOME/VimProject/brute/output_test.txt
+    silent execute "normal \<C-w>h\<C-w>k"
+    silent execute "normal \<C-w>20>"
     tabfirst
     silent execute "normal \<C-w>h\<C-w>k"
 endfunction
 
 function! ClearThis()
-if has('unix')
-    w | silent !cp $HOME/VimProject/templates/core.cpp %
-endif
-if has('win32')
-    w | silent !copy \%userprofile\%\\VimProject\\templates\\core.cpp %
-endif
+    if has('unix')
+        w | silent !cp $HOME/VimProject/templates/core.cpp %
+    endif
+    if has('win32')
+        w | silent !copy \%userprofile\%\\VimProject\\templates\\core.cpp %
+    endif
     redraw!
-    tabfirst
-    silent execute "normal \<C-w>h\<C-w>k"
 endfunction
 
 function! StartBrute()
@@ -79,13 +85,16 @@ function! StartBrute()
     !$HOME/VimProject/brute/script.sh
 endfunction
 
+
+let messg = "$HOME/VimProject/CompileMessage.txt"
+
 if has('win32')
     nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
     nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
 endif
 if has('unix')
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
 endif
 nnoremap <silent> <F7> :wa<CR>:!python3 %<CR>
  
@@ -98,6 +107,8 @@ nnoremap <C-b> <C-v>
 imap <C-f> {}<Left><Enter>
 inoremap <expr> <Enter> strpart(getline('.'), col('.')-2, 2) != "{}" ? "\<Enter>" : "\<CR>\<Tab>\<CR>\<Up>\<Esc>$a"
 
+"-------------LATEX--------------
+
 let g:tex_flavor = 'latex'
 
 if (has('win32'))
@@ -106,6 +117,16 @@ if (has('win32'))
         \ = '-reuse-instance -forward-search @tex @line @pdf'
     let g:vimtex_view_general_options_latexmk = '-reuse-instance'
 endif
+
+function! ClearThisLatex()
+    if has('unix')
+        w | silent !cp $HOME/VimLatex/TEMPLATE/TEMPLATE.tex %
+    endif
+    if has('win32')
+        w | silent !copy \%userprofile\%\\VimLatex\\TEMPLATE\\TEMPLATE.tex %
+    endif
+    redraw!
+endfunction
 
 func SpellCheckRu()
     set spell spelllang=ru
@@ -116,6 +137,15 @@ func SpellCheckEng()
 endfunction
 
 set langmap=ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz
+"autocmd FileType cpp,tex EnableXkbSwitch
+
+"let g:XkbSwitchLib = '/usr/local/lib/libg3kbswitch.so'
+"let g:XkbSwitchLib = "/path/to/libxkbswitch.so"
+"echo libcall(g:XkbSwitchLib, 'Xkb_Switch_getXkbLayout', '')
+"call libcall(g:XkbSwitchLib, 'Xkb_Switch_setXkbLayout', 'us')
+
+
+
 autocmd filetype tex nnoremap j gj
 autocmd filetype tex nnoremap k gk
 autocmd filetype tex vnoremap j gj
@@ -128,3 +158,11 @@ autocmd filetype tex vnoremap <Up> g<Up>
 autocmd filetype tex vnoremap <Down> g<Down>
 autocmd filetype tex nnoremap <Up> g<Up>
 autocmd filetype tex nnoremap <Down> g<Down> 
+
+autocmd filetype tex inoremap ;;  <Esc>/<++><Enter>3xr :noh<Enter>i
+autocmd filetype tex inoremap ;eq \begin{equation}<Enter>\end{equation}<Esc>ko
+autocmd filetype tex inoremap ;tab \begin{tabular}<Enter>\end{tabular}<Esc>ko
+autocmd filetype tex inoremap ;fr \frac{ }{<++>}<++><Esc>11hi
+
+
+

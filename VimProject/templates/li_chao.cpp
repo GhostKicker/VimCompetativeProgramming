@@ -1,11 +1,9 @@
-struct line
-{
+struct line {
     int64_t k, b;
     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
     int64_t operator[](int64_t a) { return a * k + b; }
 };
-struct li_chao
-{
+struct li_chao {
     static const int64_t maxn = 100 * 1000 + 4;
     vector<int64_t> x;
     vector<line> tr;
@@ -19,8 +17,7 @@ struct li_chao
         x.resize(unique(all(x)) - begin(x));
         tr.assign(4 * maxn, line());
     }
-    void set(line nl, int64_t v = 1, int64_t l = 0, int64_t r = maxn)
-    {
+    void set(line nl, int64_t v = 1, int64_t l = 0, int64_t r = maxn) {
         r = min(r, (int64_t)x.size() - 1);
         int64_t m = (l + r) / 2;
         bool left = nl[x[l]] < tr[v][x[l]];
@@ -32,8 +29,7 @@ struct li_chao
         if (right != mid) set(nl, v + v + 1, m, r);
 
     }
-    int64_t get(int64_t p, int64_t v = 1, int64_t l = 0, int64_t r = maxn)
-    {
+    int64_t get(int64_t p, int64_t v = 1, int64_t l = 0, int64_t r = maxn) {
         //gives minimal value
         r = min(r, (int64_t)x.size() - 1);
         int64_t m = (l + r) / 2;

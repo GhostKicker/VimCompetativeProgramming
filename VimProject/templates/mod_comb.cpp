@@ -1,7 +1,7 @@
 const int mod = 998244353;
-int add(int a, int b) { return (a + b) % mod; }
-int sub(int a, int b) { return (mod + a - b) % mod; }
-int mult(int a, int b) { return ll(a) * b % mod; }
+inline int add(int a, int b) { return ((a+b < mod) ? (a+b) : (a+b-mod)); }
+inline int sub(int a, int b) { return ((a-b >= 0) ? (a-b) : (a-b+mod)); }
+int mult(int a, int b) { return int(ll(a) * b % mod); }
 int binpow(int a, int p) {
     int res = 1;
     for (; p; p /= 2) {
