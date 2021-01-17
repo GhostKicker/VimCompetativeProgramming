@@ -18,5 +18,4 @@ struct dsu {
         p[b] = a;
         s[a] += s[b];
     }
-
 };

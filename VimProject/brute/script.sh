@@ -1,7 +1,7 @@
 #/bin/bash
 
 function compile() {
-g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 $1.cpp -o $1 && echo SUCCESS || echo FAIL
+g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 $1.cpp -o $1 && echo SUCCESS || echo FAIL
 }
 
 str=""

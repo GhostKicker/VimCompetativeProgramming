@@ -16,45 +16,7 @@ chrono::time_point<chrono::steady_clock> cl;
 double current_time() { return (double)(chrono::steady_clock::now() - cl).count() / 1e9; }
 //------------------------------------------//
 
-struct node{
-    int left = 0;
-    int right = 0;
-    int key = 0;
-    int count = 0;
-    int minn = 2*inf;
-    int maxx = 2*-inf;
-    node(){}
-};
-vector<node> tr;
 
-void dfs(int v){
-    if (v == 0) return;
-    tr[v].count = 1;
-    tr[v].minn = tr[v].key;
-    tr[v].maxx = tr[v].key;
-
-    dfs(tr[v].left);
-    dfs(tr[v].right);
-    tr[v].count += tr[tr[v].left].count;
-    tr[v].count += tr[tr[v].right].count;
-    tr[v].minn = min(tr[v].minn, tr[tr[v].left].minn);
-    tr[v].minn = min(tr[v].minn, tr[tr[v].right].minn);
-    tr[v].maxx = max(tr[v].maxx, tr[tr[v].left].maxx);
-    tr[v].maxx = max(tr[v].maxx, tr[tr[v].right].maxx);
-}
-
-int cur = 0;
-int lookup(int v, int l, int r){
-    ++cur;
-    if (v == 0) return 0;
-    if (l <= tr[v].minn && tr[v].maxx <= r) return tr[v].count;
-    if (tr[v].maxx < l || r < tr[v].minn) return 0;
-    int res = 0;
-    if (l <= tr[v].key && tr[v].key <= r) ++res;
-    res += lookup(tr[v].left, l, r);
-    res += lookup(tr[v].right, l, r);
-    return res;
-}
 
 
 int32_t main(){
@@ -69,25 +31,34 @@ int32_t main(){
 
     int n;
     cin >> n;
-    tr.resize(n+1);
-
-    for (int i = 1; i <= n; ++i){
-        cin >> tr[i].left >> tr[i].right;
-        cin >> tr[i].key;
+    vector<int> a(n);
+    vector<int> res(n, 1);
+    for (auto& it : a) cin >> it;
+    vector<vector<int>> g(n);
+    for (int i = 0; i < n-1; ++i){
+        int f, t;
+        cin >> f >> t;
+        --t;--f;
+        g[f].push_back(t);
+        g[t].push_back(f);
     }
-    dfs(1);
 
-    int q; 
-    cin >> q;
-
-
-    for (int qq = 0; qq < q; ++qq){
-        cur = 0;
-        int l, r;
-        cin >> l >> r;
-        lookup(1, l, r);
-        cout << cur << "\n";
+    map<int,int> m;
+    function<void(int, int, int)> dfs = [&](int v, int p, int r){
+        m[a[v]]++;
+        if (m[a[v]] > 1) res[r] = 0;
+        for (auto& it : g[v]){
+            if (it == p) continue;
+            dfs(it, v, r);
+        }
+        m[a[v]]--;
+    };
+    for (int i = 0; i < n; ++i){
+        dfs(i, -1, i);
     }
+    int result = 0;
+    for (auto& it : res) result += it;
+    cout << result;
 
 
     return 0;

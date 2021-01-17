@@ -89,12 +89,12 @@ endfunction
 let messg = "$HOME/VimProject/CompileMessage.txt"
 
 if has('win32')
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
 endif
 if has('unix')
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Weffc++ -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
 endif
 nnoremap <silent> <F7> :wa<CR>:!python3 %<CR>
  
