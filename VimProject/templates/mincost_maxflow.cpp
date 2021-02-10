@@ -66,10 +66,6 @@ struct MCMF{
             if (cur.first == 0) break;
             res += cur.second;
         }
-        for (auto& e : g[s]) {
-            if (E[e].cap != 1) continue;
-            if (E[e].f != 1) OUT(-1);
-        }
         return res;
     }
      

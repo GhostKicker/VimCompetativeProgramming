@@ -98,6 +98,8 @@ if has('unix')
 endif
 nnoremap <silent> <F7> :wa<CR>:!python3 %<CR>
  
+imap jk <Esc>
+vmap jk <Esc>
 vmap <C-c> "+y
 nmap <C-a> ggVG
 nmap <C-v> "+gp

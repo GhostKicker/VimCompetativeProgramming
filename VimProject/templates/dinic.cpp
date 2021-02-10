@@ -10,17 +10,18 @@ struct Dinic{
     vector<int> d, cnt;
     vector<edge> E;
     bool bfs() {
+        int maxlim = numeric_limits<int>::max() / 2 - 10;
         queue<int> q;
         q.push(s);
         cnt.assign(graphsize, 0);
-        d.assign(graphsize, inf);
+        d.assign(graphsize, maxlim);
         d[s] = 0;
         while (q.size()) {
             int v = q.front();
             if (v == t) return true;
             q.pop();
             for (auto e : g[v]) {
-                if (d[E[e].to] == inf && E[e].f < E[e].cap) {
+                if (d[E[e].to] == maxlim && E[e].f < E[e].cap) {
                     q.push(E[e].to);
                     d[E[e].to] = d[v] + 1;
                 }
@@ -45,10 +46,11 @@ struct Dinic{
     }
     
     int maxflow() {
+        int maxlim = numeric_limits<int>::max() / 2 - 10;
         int f = 0;
         int ans = 0;
         while (bfs())
-            while ((f = dfs(s, inf)))
+            while ((f = dfs(s, maxlim)))
                 ans += f;
         return ans;
     }

@@ -1,30 +1,8 @@
-#include <bits/stdc++.h>
- 
-#ifdef HOME
-#define db(x) cerr << #x << " = " << x << endl
-#define db3(x, y, z) cerr << "(" << #x << ", " << #y << ", " << #z << ") = (" << x << ", " << y << ", " << z << ")" << endl
-#define db2(x, y) cerr << "(" << #x << ", " << #y << ") = (" << x << ", " << y << ")" << endl
-#define dbv(a) cerr << #a << " = "; for (auto xxx: a) cerr << xxx  << " "; cerr << endl
-#else
-#define db(x) ;
-#define db3(x, y, z) ;
-#define db2(x, y) ;
-#define dbv(a) ;
-#endif
- 
-using namespace std;
-typedef long long ll;
-typedef double dbl;
- 
- 
-const int INF = 1.01e9;
- 
-void print(vector<pair<int, int>> a) {
-    cout << 2 * a.size() << endl;
-    for (auto o : a) cout << o.first + 1 << " " << o.second + 1 << endl;
-}
- 
-vector<pair<int, int>> solve(int n, vector<pair<int, int>> ed) {
+chrono::time_point<chrono::steady_clock> cl;
+double current_time() { return (double)(chrono::steady_clock::now() - cl).count() / 1e9; }
+
+vector<pair<int, int>> matching(int n, vector<pair<int, int>> ed) {
+    auto sttm = current_time();
     vector<vector<int>> e(n);
     for (auto o : ed) {
         e[o.first].push_back(o.second);
@@ -58,7 +36,7 @@ vector<pair<int, int>> solve(int n, vector<pair<int, int>> ed) {
         return 0;
     };
  
-    while (clock() / (double)CLOCKS_PER_SEC < 0.3) {
+    while (current_time() - sttm < 0.3) {
         for (int i = 0; i < n; i++) {
             if (mt[i] != -1) continue;
             tmr++;
@@ -68,22 +46,4 @@ vector<pair<int, int>> solve(int n, vector<pair<int, int>> ed) {
     vector<pair<int, int>> ans;
     for (int i = 0; i < n; i++) if (mt[i] > i) ans.push_back({i, mt[i]});
     return ans;
-}
- 
-int main() {
-#ifdef HOME
-    assert(freopen("in", "r", stdin));
-#endif
- 
-    int n;
-    cin >> n;
-    vector<pair<int, int>> ed;
-    int u, v;
-    while (cin >> u >> v) ed.push_back({u - 1, v - 1});
- 
-    print(solve(n, ed));
- 
-#ifdef HOME
-    cerr << "time: " << clock() * 1.0 / CLOCKS_PER_SEC << endl;
-#endif
 }

@@ -34,7 +34,7 @@ struct stree {
         int mid = (tl + tr) / 2;
         if (l < mid) set(l, min(r, mid), x, v + v, tl, mid);
         if (r > mid) set(max(l, mid), r, x, v + v + 1, mid, tr);
-        update(v);
+        update(v, tl, tr);
     }
     int get(int l, int r, int v = 1, int tl = 0, int tr = -1) {
         if (tr == -1) tr = n;
@@ -45,7 +45,7 @@ struct stree {
         int res = 0;
         if (l < mid) res += get(l, min(r, mid), v + v, tl, mid);
         if (r > mid) res += get(max(l, mid), r, v + v + 1, mid, tr);
-        update(v);
+        update(v, tl, tr);
         return res;
     }
 };

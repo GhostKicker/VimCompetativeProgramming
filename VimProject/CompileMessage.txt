@@ -1,0 +1,39 @@
+VimProject/source.cpp: In constructor ‘line::line(int64_t, int64_t)’:
+VimProject/source.cpp:26:42: warning: declaration of ‘b’ shadows a member of ‘line’ [-Wshadow]
+   26 |     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+      |                                          ^
+VimProject/source.cpp:25:16: note: shadowed declaration is here
+   25 |     int64_t k, b;
+      |                ^
+VimProject/source.cpp:26:42: warning: declaration of ‘k’ shadows a member of ‘line’ [-Wshadow]
+   26 |     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+      |                                          ^
+VimProject/source.cpp:25:13: note: shadowed declaration is here
+   25 |     int64_t k, b;
+      |             ^
+VimProject/source.cpp: In constructor ‘line::line(int64_t, int64_t)’:
+VimProject/source.cpp:26:55: warning: declaration of ‘b’ shadows a member of ‘line’ [-Wshadow]
+   26 |     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+      |                                                       ^
+VimProject/source.cpp:25:16: note: shadowed declaration is here
+   25 |     int64_t k, b;
+      |                ^
+VimProject/source.cpp:26:55: warning: declaration of ‘k’ shadows a member of ‘line’ [-Wshadow]
+   26 |     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+      |                                                       ^
+VimProject/source.cpp:25:13: note: shadowed declaration is here
+   25 |     int64_t k, b;
+      |             ^
+VimProject/source.cpp: In constructor ‘line::line(int64_t, int64_t)’:
+VimProject/source.cpp:26:55: warning: declaration of ‘b’ shadows a member of ‘line’ [-Wshadow]
+   26 |     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+      |                                                       ^
+VimProject/source.cpp:25:16: note: shadowed declaration is here
+   25 |     int64_t k, b;
+      |                ^
+VimProject/source.cpp:26:55: warning: declaration of ‘k’ shadows a member of ‘line’ [-Wshadow]
+   26 |     line(int64_t k = 0, int64_t b = INF) :k(k), b(b) {}
+      |                                                       ^
+VimProject/source.cpp:25:13: note: shadowed declaration is here
+   25 |     int64_t k, b;
+      |             ^

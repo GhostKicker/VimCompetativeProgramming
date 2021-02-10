@@ -3,6 +3,7 @@
 #pragma GCC optimize("unroll-loops")
 #pragma GCC target("sse,sse2,sse3,ssse3,abm,mmx,tune=native")
 #endif
+//#define _GLIBCXX_DEBUG
 #include "bits/stdc++.h"
 //#define int ll
 #define all(x) (x).begin(), (x).end()
@@ -18,7 +19,6 @@ double current_time() { return (double)(chrono::steady_clock::now() - cl).count(
 
 
 
-
 int32_t main(){
     cl = chrono::steady_clock::now();
     ios_base::sync_with_stdio(false);
@@ -28,6 +28,7 @@ int32_t main(){
     freopen("VimProject/input.txt", "r", stdin);
     freopen("VimProject/output.txt", "w", stdout);
 #endif
+
 
 
     return 0;

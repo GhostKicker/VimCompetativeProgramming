@@ -18,7 +18,6 @@ int32_t main(){
     cout << fixed << setprecision(10);
     cin.tie(nullptr);
 
-
     freopen("VimProject/brute/seed.txt", "r", stdin);
     ll seed; cin >> seed;
     fclose(stdin);
@@ -28,25 +27,14 @@ int32_t main(){
     cout << flush;
     fclose(stdout);
 
-    mt19937 rng(seed);
+    mt19937_64 rng(seed);
 
 #ifdef _MY
     freopen("VimProject/input.txt", "r", stdin);
     freopen("VimProject/output.txt", "w", stdout);
 #endif
 
-    int n = 1000;
-    cout << n << endl;
-    for (int i = 0; i < n; ++i) cout << rng() % n + inf << " ";
-    cout << endl;
 
-    vector<pair<int,int>> e;
-    for (int i = 1; i < n; ++i){
-        e.push_back(make_pair(i, rng()%i));
-        if (rng() % 2) swap(e.back().second, e.back().first);
-    }
-    shuffle(all(e), rng);
-    for (auto& it : e) cout << it.first + 1 << " " << it.second + 1 << endl;
 
     return 0;
 }
