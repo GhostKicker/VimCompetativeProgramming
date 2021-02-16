@@ -34,6 +34,20 @@ int32_t main(){
     freopen("VimProject/output.txt", "w", stdout);
 #endif
 
+    int n = 10;
+    int m = 10;
+    int q = 80;
+    cout << n << " " << m << " " << q << endl;
+    set<pair<int,int>> s;
+    while(q > 0){
+        int r = rng() % n + 1;
+        int c = rng() % m + 1;
+        if (s.count(make_pair(r, c))) continue;
+        cout << r << " " << c << endl;
+        s.insert(make_pair(r, c));
+        --q;
+    }
+    
 
 
     return 0;

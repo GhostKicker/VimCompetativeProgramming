@@ -5,7 +5,6 @@
 #endif
 //#define _GLIBCXX_DEBUG
 #include "bits/stdc++.h"
-//#define int ll
 #define all(x) (x).begin(), (x).end()
 using namespace std;
 typedef long long ll;

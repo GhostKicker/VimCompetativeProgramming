@@ -85,6 +85,10 @@ function! StartBrute()
     !$HOME/VimProject/brute/script.sh
 endfunction
 
+command! ClearThis call ClearThis()
+command! Setup call Setup()
+command! SetupBrute call SetupBrute()
+command! StartBrute call StartBrute()
 
 let messg = "$HOME/VimProject/CompileMessage.txt"
 
@@ -98,8 +102,6 @@ if has('unix')
 endif
 nnoremap <silent> <F7> :wa<CR>:!python3 %<CR>
  
-imap jk <Esc>
-vmap jk <Esc>
 vmap <C-c> "+y
 nmap <C-a> ggVG
 nmap <C-v> "+gp

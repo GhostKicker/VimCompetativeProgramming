@@ -10,7 +10,7 @@ struct node{
     node* l = nullptr;
     node* r = nullptr;
 };
-node nodes[3*000*000];
+node nodes[3*1000*1000];
 int idxnode = 0;
 node*& safe_ptr(node*& a){
     if (a == nullptr)
@@ -19,7 +19,7 @@ node*& safe_ptr(node*& a){
 }
 struct li_chao{
     static const int64_t maxn = 10 * 1000 * 1000 + 4;
-    node* root;
+    node* root = nullptr;
     li_chao(){ 
         safe_ptr(root);
     }
