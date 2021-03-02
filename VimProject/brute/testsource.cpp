@@ -1,80 +1,80 @@
-#ifndef _MY
-#pragma GCC optimize("Ofast")
-#pragma GCC optimize("unroll-loops")
-#pragma GCC target("sse,sse2,sse3,ssse3,abm,mmx,tune=native")
-#endif
-#include "bits/stdc++.h"
-//#define int ll
-#define all(x) (x).begin(), (x).end()
+#include <bits/stdc++.h>
 using namespace std;
-typedef long long ll;
-typedef long double ld;
-const int64_t INF = (int64_t)(2e18);
-const int inf = (int)(1e9 + 7);
-const int maxn = 500 * 1000 + 100;
-chrono::time_point<chrono::steady_clock> cl;
-double current_time() { return (double)(chrono::steady_clock::now() - cl).count() / 1e9; }
-//------------------------------------------//
-
-int good[3050][3050];
-int used[3050][3050];
-int dr[4] = {-1, 0, 1, 0};
-int dc[4] = {0, -1, 0, 1};
-
-
-int32_t main(){
-    cl = chrono::steady_clock::now();
-    ios_base::sync_with_stdio(false);
-    cout << fixed << setprecision(10);
-    cin.tie(nullptr);
+const int N = 2e5 + 5;
+int n, siz[N];
+vector<int> fib;
+vector<pair<int, bool> > G[N];
+void NO() { cout << "NO"; exit(0); }
+void GetSize(int u, int fa)
+{
+    siz[u] = 1;
+    for(pair<int, bool> e : G[u])
+    {
+        if(e.second) continue;
+        int v = e.first;
+        if(v == fa) continue;
+        GetSize(v, u);
+        siz[u] += siz[v];
+    }
+}
+void CutEdge(int u, int fa, int k, int &pu, int &pv, int &kd)
+{
+    for(pair<int, bool> e : G[u])
+    {
+        if(pu) return;
+        if(e.second) continue;
+        int v = e.first;
+        if(v == fa) continue;
+        if(siz[v] == fib[k - 1] || siz[v] == fib[k - 2])
+        {
+            pu = u; pv = v;
+            kd = (siz[v] == fib[k - 1]) ? k - 1 : k - 2;
+            break;
+        }
+        CutEdge(v, u, k, pu, pv, kd);
+    }
+}
+void Check(int u, int k)
+{
+//    cout << "Check " << u << ' ' << k << endl;
+    if(k <= 1) return;
+    GetSize(u, 0);
+    int pu = 0, pv = 0, kd = 0;
+    CutEdge(u, 0, k, pu, pv, kd);
+//    cout << pu << ' ' << pv << ' ' << kd << endl;
+    if(!pu) NO();
+    for(pair<int, bool> &e : G[pu])
+        if(e.first == pv) e.second = true;
+    for(pair<int, bool> &e : G[pv])
+        if(e.first == pu) e.second = true;
+    Check(pv, kd);
+    Check(pu, (kd == k - 1) ? k - 2 : k - 1);
+}
+int main()
+{
+    ios::sync_with_stdio(false);
 #ifdef _MY
     freopen("VimProject/input.txt", "r", stdin);
     freopen("VimProject/output.txt", "w", stdout);
 #endif
-
-    fill(&good[0][0], &good[3050][0], 1);
-    int res = 0;
-    int rows, cols, n;
-    cin >> rows >> cols >> n;
-    for (int i = 0; i < n; ++i){
-        fill(&used[0][0], &used[3050][0], 0);
-        int r, c;
-        cin >> r >> c;
-        --r; --c;
-        good[r][c] = 0;
-        for (int cc = 0; cc < cols; ++cc){
-            if (good[0][cc] == 0) continue;
-            if (used[0][cc]) continue;
-            function<void(int, int)> dfs = [&](int r, int c){
-                used[r][c] = 1;
-                for (int i = 0; i < 4; ++i){
-                    int nr = r+dr[i];
-                    int nc = (c+dc[i]+cols) % cols;
-                    if (nr < 0) continue;
-                    if (nr >= rows) continue;
-                    if (good[nr][nc] == 0) continue;
-                    if (used[nr][nc]) continue;
-                    dfs(nr, nc);
-                }
-            };
-            dfs(0, cc);
-        }
-        bool flag = false;
-        for (int cc = 0; cc < cols; ++cc){
-            if (used[rows-1][cc] == 0) continue;
-            flag = true;
-            break;
-        }
-        good[r][c] = (1-flag);
-        res += flag;
-        //for (int i = 0; i < rows; ++i){
-        //    for (int j = 0; j < cols; ++j)
-        //        cout << used[i][j];
-        //    cout << endl;
-        //}
-        //cout << endl;
+    cin >> n;
+    fib.push_back(1);
+    fib.push_back(1);
+    for(int i = 1; ; i++)
+    {
+        if(fib[i] >= n) break;
+        int new_fib = fib[i] + fib[i - 1];
+        fib.push_back(new_fib);
     }
-    cout << res;
-
+    for(int i = 1; i < n; i++)
+    {
+        int u, v;
+        cin >> u >> v;
+        G[u].push_back(make_pair(v, false));
+        G[v].push_back(make_pair(u, false));
+    }
+    if(fib[fib.size() - 1] != n) NO();
+    Check(1, fib.size() - 1);
+    cout << "YES";
     return 0;
 }

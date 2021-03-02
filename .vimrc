@@ -1,6 +1,8 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
 set pythonthreedll=python38.dll
+set exrc
+set secure
 
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -8,13 +10,13 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'lervag/vimtex'
 Plugin 'morhetz/gruvbox'
 Plugin 'grwlf/xkb-switch'
+"Plugin 'valloric/youcompleteme'
 "Plugin 'SirVer/ultisnips'
 call vundle#end()            " required
 filetype plugin indent on    " required
 
-"remap caps lock to escape and back
-"au VimEnter !xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
-"au VimLeave !xmodmap -e 'clear Lock' -e 'keycode 0x42 = Caps_Lock'
+let g:ycm_confirm_extra_conf = 0
+let g:ycm_max_diagnostics_to_display = 0
 
 syntax on
 set background=dark
@@ -85,20 +87,23 @@ function! StartBrute()
     !$HOME/VimProject/brute/script.sh
 endfunction
 
+
 command! ClearThis call ClearThis()
 command! Setup call Setup()
 command! SetupBrute call SetupBrute()
 command! StartBrute call StartBrute()
 
-let messg = "$HOME/VimProject/CompileMessage.txt"
+let local = "$HOME/VimProject/"
+let messg = local."CompileMessage.txt"
+let flags = "-D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17"
 
 if has('win32')
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && %:r.exe \|\| echo FAIL <CR>
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r.exe \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :execute "!g++ ".flags." -O2 % -o %:r 2> ".messg." && echo SUCCESS && %:r.exe \|\| echo FAIL" <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :execute "!g++ ".flags." -O0 -g % -o %:r 2> ".messg." && echo SUCCESS && gdb %:r.exe \|\| echo FAIL" <CR>
 endif
 if has('unix')
-    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O2 % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && %:r \|\| echo FAIL <CR>
-    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :!g++ -D_MY -Wall -Wextra -Wfloat-conversion -Wconversion -Wshadow -Wno-unused-result -std=c++17 -O0 -g % -o %:r 2> ~/VimProject/CompileMessage.txt && echo SUCCESS && gdb %:r \|\| echo FAIL <CR>
+    nnoremap <silent> <F5> :wa<CR><C-w>h<C-w>k :execute "!g++ ".flags." -O2 % -o %:r 2> ".messg." && echo SUCCESS && %:r \|\| echo FAIL" <CR>
+    nnoremap <silent> <F6> :wa<CR><C-w>h<C-w>k :execute "!g++ ".flags." -O0 -g % -o %:r 2> ".messg." && echo SUCCESS && gdb %:r \|\| echo FAIL" <CR>
 endif
 nnoremap <silent> <F7> :wa<CR>:!python3 %<CR>
  
@@ -167,6 +172,4 @@ autocmd filetype tex inoremap ;;  <Esc>/<++><Enter>3xr :noh<Enter>i
 autocmd filetype tex inoremap ;eq \begin{equation}<Enter>\end{equation}<Esc>ko
 autocmd filetype tex inoremap ;tab \begin{tabular}<Enter>\end{tabular}<Esc>ko
 autocmd filetype tex inoremap ;fr \frac{ }{<++>}<++><Esc>11hi
-
-
 

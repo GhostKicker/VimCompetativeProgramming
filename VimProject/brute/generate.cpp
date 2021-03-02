@@ -1,4 +1,7 @@
 #include "bits/stdc++.h"
+#define F first
+#define S second
+#define mp make_pair
 //#define int ll
 #define all(x) (x).begin(), (x).end()
 using namespace std;
@@ -34,19 +37,16 @@ int32_t main(){
     freopen("VimProject/output.txt", "w", stdout);
 #endif
 
-    int n = 10;
-    int m = 10;
-    int q = 80;
-    cout << n << " " << m << " " << q << endl;
-    set<pair<int,int>> s;
-    while(q > 0){
-        int r = rng() % n + 1;
-        int c = rng() % m + 1;
-        if (s.count(make_pair(r, c))) continue;
-        cout << r << " " << c << endl;
-        s.insert(make_pair(r, c));
-        --q;
+    int n = 8;
+    cout << n << endl;
+    vector<pair<int,int>> e;
+    for (int i = 1; i < n; ++i){
+        e.push_back(mp(i, rng()%i));
+        e.back().F++;
+        e.back().S++;
     }
+    shuffle(all(e), rng);
+    for (auto& it : e) cout << it.F << " " << it.S << endl;
     
 
 
